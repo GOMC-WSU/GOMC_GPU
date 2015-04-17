@@ -1,0 +1,19 @@
+*******************
+*****GOMC 0.97*****
+*******************
+
+
+>>Building GOMC
+From the terminal
+1. Go inside the root folder
+2. run make
+
+>>Test and Run:
+To test systems, put input files directly in the root folder, where the GOMC.out is 
+To run the system, just execute ./GOMC.out
+
+>>Configure:
+You can change nvcc compiler and add flag through the makefile.
+To compile on NVIDA's CC 2.x GPUs, go to the "# CUDA code generation flags" sections and change the "GENCODE_FLAGS" to "$(GENCODE_SM20)".
+
+>>To build with NVT or GEMC, you can change the Ensemble flags at the EnsemblePreprocessor.h file.
