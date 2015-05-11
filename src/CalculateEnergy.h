@@ -105,7 +105,7 @@ class CalculateEnergy
       //! @param trialPos Contains exactly n potential particle positions
       //! @param energy Return array, must be pre-allocated to size n
       //! @param box Index of box molecule is in
-      void CalculateEnergy::ParticleNonbonded(double* energy,
+      void ParticleNonbonded(double* energy,
                                         const cbmc::TrialMol& trialMol,
                                         XYZArray const& trialPos,
                                         const uint partIndex,
@@ -150,12 +150,12 @@ class CalculateEnergy
       //! @param box Index of box under consideration
       //! @param kind Kind of particle being added or removed
       //! @param add If removed: false (sign=-1); if added: true (sign=+1)
-      Intermolecular CalculateEnergy::MoleculeTailChange(const uint box,
+      Intermolecular MoleculeTailChange(const uint box,
                                                    const uint kind,
                                                    const bool add) const;
 
       //Calculates intramolecular energy of a full molecule
-      void CalculateEnergy::MoleculeIntra(double& bondEn,
+      void MoleculeIntra(double& bondEn,
                                     double& nonBondEn,
                                     const uint molIndex,
                                     const uint box) const;
@@ -263,32 +263,32 @@ class CalculateEnergy
 
 
       //Calculates bond vectors of a full molecule, stores them in vecs
-      void CalculateEnergy::BondVectors(XYZArray & vecs,
+      void BondVectors(XYZArray & vecs,
                                   MoleculeKind const& molKind,
                                   const uint molIndex,
                                   const uint box) const;
 
       //Calculates bond stretch intramolecular energy of a full molecule
-       void CalculateEnergy::MolBond(double & energy,
+       void MolBond(double & energy,
                               MoleculeKind const& molKind,
                               XYZArray const& vecs,
                               const uint box) const;
 
       //Calculates angular bend intramolecular energy of a full molecule
-      void CalculateEnergy::MolAngle(double & energy,
+      void MolAngle(double & energy,
                                MoleculeKind const& molKind,
                                XYZArray const& vecs,
                                const uint box) const;
 
       //Calculates dihedral torsion intramolecular energy of a full molecule
-      void CalculateEnergy::MolDihedral(double & energy,
+      void MolDihedral(double & energy,
                                   MoleculeKind const& molKind,
                                   XYZArray const& vecs,
                                   const uint box) const;
 
 
       //Calculates Nonbonded intramolecule energy of a full molecule
-      void CalculateEnergy::MolNonbond(double & energy,
+      void MolNonbond(double & energy,
                                  MoleculeKind const& molKind,
                                  const uint molIndex,
                                  const uint box) const;

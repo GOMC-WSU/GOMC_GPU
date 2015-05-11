@@ -160,7 +160,7 @@ void PDBOutput::InitPartVec(pdb_setup::Atoms const& atoms)
 	 
 
 	  MoleculeLookup::box_iterator tm = sysRef->molLookupRef.BoxBegin(0);
-      MoleculeLookup::box_iterator en = sysRef->molLookupRef.BoxEnd(1);
+      MoleculeLookup::box_iterator en = sysRef->molLookupRef.BoxEnd(BOX_TOTAL-1);
       while(tm != en)
       {
          
