@@ -1,10 +1,3 @@
-/*******************************************************************************
-GPU OPTIMIZED MONTE CARLO (GOMC) BETA 0.97 (GPU version)
-Copyright (C) 2015  GOMC Group
-
-A copy of the GNU General Public License can be found in the COPYRIGHT.txt
-along with this program, also can be found at <http://www.gnu.org/licenses/>.
-********************************************************************************/
 
 #include "Coordinates.h"
 #include "TransformMatrix.h"
@@ -30,7 +23,7 @@ void Coordinates::TranslateRand
 {
    XYZ shift = prngRef.SymXYZ(max);
 
-   TmpShift = shift;
+   //TmpShift = shift;
 
    uint stop=0;
    //Get range.
@@ -79,29 +72,48 @@ void Coordinates::RotateRand
 //scale all in each mol newCOM[m]/oldCOM[m]
 void Coordinates::VolumeTransferTranslate
 (uint & state, Coordinates & dest, COM & newCOM, BoxDimensions & newDim,
- COM const& oldCOM, const uint bO, const uint bN, const double max) const
+ COM const& oldCOM, const double max) const
 {
-   double scaleO = 0.0, scaleN = 0.0, transfer = prngRef.Sym(max);
+    double scale[BOX_TOTAL], transfer = prngRef.Sym(max);
+   for (uint b = 0; b < BOX_TOTAL; ++b)
+   {
+      scale[b] = 0.0;
+   }
+
+
    //Scale cell
-   state = boxDimRef.ExchangeVolume(newDim, scaleO, scaleN, bO, bN, transfer);
-   //If scaling succeeded (if it wouldn't take the box to below 2*rcut, cont.
+   state = boxDimRef.ExchangeVolume(newDim, scale, transfer);
+   ////If scaling succeeded (if it wouldn't take the box to below 2*rcut, cont.
+   //for (uint b = 0; b < BOX_TOTAL && (state == mv::fail_state::NO_FAIL); ++b)
+   //{
+   //   TranslateOneBox(dest, newCOM, oldCOM, newDim, b, scale[b]);
+   //}
+
+
 }
 
 //scale all in each mol newCOM[m]/oldCOM[m]
 void Coordinates::VolumeTransferTranslate
 (uint & state, Coordinates & dest, COM & newCOM, BoxDimensions & newDim,
- COM const& oldCOM, const uint bO, const uint bN, const double max, double & scaleO, double & scaleN, double & randN ) const  
-{
+ COM const& oldCOM,  const double max, double & scaleO, double & scaleN, double & randN ) const  
+{ double scale[BOX_TOTAL];
    double  transfer = randN=prngRef.Sym(max);
-   scaleO = 0.0, scaleN = 0.0;
+ for (uint b = 0; b < BOX_TOTAL; ++b)
+   {
+      scale[b] = 0.0;
+   }
 
    //Scale cell
-   state = boxDimRef.ExchangeVolume(newDim, scaleO, scaleN, bO, bN, transfer);
+   state = boxDimRef.ExchangeVolume(newDim, scale, transfer);
+
+   scaleO= scale[0];
+   scaleN= scale[1];
+
 
 }
 
 //Assumes dest is already initialized
-inline void Coordinates::TranslateOneBox
+void Coordinates::TranslateOneBox
 (Coordinates & dest, COM & newCOM, COM const& oldCOM,
  BoxDimensions const& newDim, const uint b, const double scale) const
 {
@@ -125,7 +137,6 @@ inline void Coordinates::TranslateOneBox
    }
    
 }
-
 
 
 

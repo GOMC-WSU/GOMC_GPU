@@ -1,15 +1,8 @@
-/*******************************************************************************
-GPU OPTIMIZED MONTE CARLO (GOMC) BETA 0.97 (GPU version)
-Copyright (C) 2015  GOMC Group
-
-A copy of the GNU General Public License can be found in the COPYRIGHT.txt
-along with this program, also can be found at <http://www.gnu.org/licenses/>.
-********************************************************************************/
 
 #ifndef SYSTEM_H
 #define SYSTEM_H
 
-#include "EnsemblePreprocessor.h" //For VARIABLE_<QUANTITY> conditional defines
+#include "EnsemblePreprocessor.h" 
 #include "CalculateEnergy.h" 
 
 
@@ -31,6 +24,22 @@ class MoveBase;
 #define Min_CUDA_Minor 0 //  
 #define Min_CC_Major 3 // min compute capability major
 #define Min_CC_Minor 0 // min compute capability minor
+
+
+
+#define BLOCK_DIM 8
+#define BLOCK_SIZE BLOCK_DIM * BLOCK_DIM * BLOCK_DIM
+#define MICROCELL_DIM 4
+#define HALF_MICROCELL_DIM MICROCELL_DIM/2
+#define NumberofOps 4
+
+// micro cell list
+#define MAX_ATOMS_PER_CELL 18
+// conv cell list
+#define MaxParticleInCell 84
+
+
+
 class System
 {
  public:
@@ -43,19 +52,29 @@ class System
 
    void LoadDataToGPU();// 
    void FreeGPUDATA();//  
-
+   void LoadMolsToCells();//
    uint step; //  
    inline int _ConvertSMVer2Cores(int major, int minor);// 
    void DeviceQuery(); //  
    void RunDisplaceMove(uint rejectState, uint majKind);//  
    void RunRotateMove(uint rejectState, uint majKind ); //  
+
+   //cell list
+   void RunDisplaceMoveUsingCellList(uint rejectState, uint majKind);//
+   void RunRotateMoveUsingCellList(uint rejectState, uint majKind);//
+
+   SystemPotential ConvCellListSystemTotalEnergy();
+  
+
    #if ENSEMBLE == GEMC
-   void RunVolumeMove(uint rejectState, uint majKind);// 
+   void RunVolumeMove(uint rejectState, uint majKind, System * sys);// 
+   void RunVolumeMoveCell(uint rejectState, uint majKind, System * sys);//
+    SystemPotential NewConvCellListSystemTotalEnergy(uint majKind,SystemPotential curpot);// for volume move 
+	SystemPotential NewConvCellListSystemTotalEnergyOneBox(uint majKind, int bPick);// for NPT 
    #endif
    #if ENSEMBLE == GEMC || ENSEMBLE==GCMC
-   void RunMolTransferMove(uint rejectState, uint majKind);// 
+   void RunMolTransferMove(uint rejectState, uint majKind, System * sys);// 
    #endif
-
 
    //NOTE:
    //This must also come first... as subsequent values depend on obj.
@@ -83,6 +102,8 @@ class System
    Coordinates coordinates;
    COM com;
 
+   int MaxTrialNumber;
+
    CalculateEnergy calcEnergy;
    PRNG prng;
 
@@ -91,6 +112,15 @@ class System
    void RunMove(uint majKind, double draw, const uint step);
 
    ~System();
+
+   // conv cell  list 
+
+   void LoadAtomsToCells();
+   void  CreateAdjCellList();
+    #if ENSEMBLE == GEMC
+   void  CreateAdjCellListForScaledMols(uint majKind);
+   void LoadAtomsToCellsVolumeMove(uint majKind);
+   #endif
 
  private:
    void InitMoves();
@@ -104,5 +134,4 @@ class System
 };
 
 #endif /*SYSTEM_H*/
-
 

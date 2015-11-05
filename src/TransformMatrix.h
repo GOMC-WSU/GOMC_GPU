@@ -1,10 +1,3 @@
-/*******************************************************************************
-GPU OPTIMIZED MONTE CARLO (GOMC) BETA 0.97 (GPU version)
-Copyright (C) 2015  GOMC Group
-
-A copy of the GNU General Public License can be found in the COPYRIGHT.txt
-along with this program, also can be found at <http://www.gnu.org/licenses/>.
-********************************************************************************/
 
 #ifndef TRANSFORMMATRIX_H
 #define TRANSFORMMATRIX_H
@@ -326,10 +319,9 @@ __host__ __device__ inline TransformMatrix TransformMatrix::UniformRandom(double
 
    /*printf("%f,%f,%f\n",result.matrix[0][0],result.matrix[0][1],result.matrix[0][2] );
     printf("%f,%f,%f\n",result.matrix[1][0],result.matrix[1][1],result.matrix[1][2] );
-	 printf("%f,%f,%f\n",result.matrix[2][0],result.matrix[2][1],result.matrix[2][2] );
-*/
+	 printf("%f,%f,%f\n",result.matrix[2][0],result.matrix[2][1],result.matrix[2][2] );*/
+
    return result;
 }
 #endif
-
 

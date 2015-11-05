@@ -62,7 +62,7 @@ CUDA_LIB_PATH   ?= $(CUDA_PATH)/lib
 CUDA_BIN_PATH   ?= $(CUDA_PATH)/bin
 
 # Common binaries
-NVCC            ?= $(CUDA_BIN_PATH)/nvcc
+NVCC            ?= nvcc
 GCC             ?= gcc
 
 # Extra user flags

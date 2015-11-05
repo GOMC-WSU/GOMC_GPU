@@ -1,10 +1,3 @@
-/*******************************************************************************
-GPU OPTIMIZED MONTE CARLO (GOMC) BETA 0.97 (GPU version)
-Copyright (C) 2015  GOMC Group
-
-A copy of the GNU General Public License can be found in the COPYRIGHT.txt
-along with this program, also can be found at <http://www.gnu.org/licenses/>.
-********************************************************************************/
 
 #ifndef GEOMETRY_H
 #define GEOMETRY_H
@@ -27,6 +20,7 @@ class FFBase;
 }
 class FFSetup;
 
+// for 1-5 and more interaction
 
 struct Nonbond
 {
@@ -34,9 +28,21 @@ struct Nonbond
    uint* part2;
    uint count;
 
-   void Init(const mol_setup::MolKind& molData);
+   virtual void Init(const mol_setup::MolKind& molData);
    Nonbond(); 
    ~Nonbond();
+};
+
+// for 1-4 and more interaction
+struct Nonbond_1_4 : public Nonbond
+{
+   virtual void Init(const mol_setup::MolKind& molData);
+};
+
+// for 1-3 and more interaction, used for Martini ForceField
+struct Nonbond_1_3 : public Nonbond
+{
+   virtual void Init(const mol_setup::MolKind& molData);
 };
 
 
@@ -125,6 +131,26 @@ class SortedNonbond
       SubdividedArray subdiv;
 };
 
-#endif
+class SortedNonbond_1_4
+{
+   public:
+      //!Returns iterable pointer to first pair containing atom
+      const uint* Begin(uint atom) const
+      { return partners + subdiv.Begin(atom); }
+      //!Returns pointer to position after the last pair containing atom
+      const uint* End(uint atom) const
+      { return partners + subdiv.End(atom); }
 
+      //!Initialize from a nonbond structure
+      void Init(const Nonbond& nb, uint numAtoms);
+
+      SortedNonbond_1_4() : partners(NULL) {}
+      ~SortedNonbond_1_4() { delete[] partners; }
+
+   private:
+      uint* partners;
+      SubdividedArray subdiv;
+};
+
+#endif
 

@@ -1,10 +1,3 @@
-/*******************************************************************************
-GPU OPTIMIZED MONTE CARLO (GOMC) BETA 0.97 (GPU version)
-Copyright (C) 2015  GOMC Group
-
-A copy of the GNU General Public License can be found in the COPYRIGHT.txt
-along with this program, also can be found at <http://www.gnu.org/licenses/>.
-********************************************************************************/
 #include "ConsoleOutput.h"          //For spec;
 #include "EnsemblePreprocessor.h"   //For BOX_TOTAL, ensemble
 #include "MoveConst.h"             //For move index constants, name constants.
@@ -66,7 +59,7 @@ void ConsoleOutput::PrintBox(const uint box, const ulong step) const
 
    PrintEnergy(var->energyRef[box], var->virialRef[box],
                (box < BOXES_WITH_U_NB));
-
+    if (step > 0 )
    PrintMoveStat(box, step);
 }
 
@@ -155,16 +148,21 @@ void ConsoleOutput::PrintMolKind(const uint k, const uint kb) const
 void ConsoleOutput::PrintEnergy(Energy const& en, Virial const& vir,
                                 const bool intraOnly) const
 {
-   if (intraOnly)
+  if (intraOnly)
       std::cout << "Energy (in K): total: " << en.total << std::endl
-                << "intra (bonded): " << en.intraBond  
-                << std::endl << std::endl;
+#ifdef EN_SUBCAT_OUT
+		<< "intra (bonded): " << en.intraBond << std::endl 
+#endif
+                << std::endl;
    else
       std::cout << "Energy (in K): total: " << en.total << std::endl
+#ifdef EN_SUBCAT_OUT
                 << "inter: " << en.inter << " ; inter (tail corr.): " 
                 << en.tc << std::endl << "intra (bonded): "
-                << en.intraBond << " ; intra (nonbonded): " << en.intraNonbond 
-                << std::endl << std::endl;
+                << en.intraBond << " ; intra (nonbonded): " << en.intraNonbond << std::endl
+#endif
+
+		<< std::endl;
 }
 
 void ConsoleOutput::PrintBanner(std::string const& str) const 
@@ -175,5 +173,4 @@ void ConsoleOutput::PrintBanner(std::string const& str) const
 	     << "--    ==========      --" << std::endl
 	     << "------------------------" << std::endl << std::endl;
 }
-
 

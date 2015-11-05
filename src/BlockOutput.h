@@ -1,10 +1,3 @@
-/*******************************************************************************
-GPU OPTIMIZED MONTE CARLO (GOMC) BETA 0.97 (GPU version)
-Copyright (C) 2015  GOMC Group
-
-A copy of the GNU General Public License can be found in the COPYRIGHT.txt
-along with this program, also can be found at <http://www.gnu.org/licenses/>.
-********************************************************************************/
 #ifndef BLOCK_OUTPUT_H
 #define BLOCK_OUTPUT_H
 
@@ -22,7 +15,7 @@ along with this program, also can be found at <http://www.gnu.org/licenses/>.
 #include "StaticVals.h"
 #include "PDBSetup.h" //For atoms class.
 #include "BoxDimensions.h" //For BOXES_WITH_VOLUME
-
+#include <limits> //for std::numeric_limits
 class System;
 
 
@@ -37,7 +30,10 @@ struct BlockAverage
    BlockAverage(): enable(false), block(NULL), uintSrc(NULL), dblSrc(NULL) {}
    
    ~BlockAverage() 
-   { 
+   {   if (outF.is_open())
+      {
+	 outF.close();
+      }
       if (dblSrc != NULL)
       {
 	 delete[] dblSrc;
@@ -59,7 +55,9 @@ struct BlockAverage
 
    //Set one of the pointers to the block values we're tracking
    void SetRef(double * loc, const uint b) 
-   { dblSrc[b] = loc; uintSrc[b] = NULL; }
+   {  dblSrc[b] = loc;
+      uintSrc[b] = NULL;
+      outF << std::setprecision(std::numeric_limits<double>::digits10+2) << std::setw(25); }
    void SetRef(uint * loc, const uint b) 
    { uintSrc[b] = loc; dblSrc[b] = NULL; }
 
@@ -97,9 +95,9 @@ struct BlockAverage
 
 struct BlockAverages : OutputableBase
 {
-   BlockAverages(OutputVars & v){ this->var = &v; }
+   BlockAverages(OutputVars & v){ this->var = &v; blocks = NULL; }//v1
    
-   ~BlockAverages(void) { if ( blocks != NULL ) delete[] blocks; }
+  
 
 
    
@@ -113,7 +111,7 @@ struct BlockAverages : OutputableBase
 
    
    virtual void DoOutput(const ulong step);
-    void GetDataFromGPU();
+ 
 
  private:   
 
@@ -179,4 +177,3 @@ struct BlockAverages : OutputableBase
 };
 
 #endif /*BLOCK_OUTPUT_H*/
-

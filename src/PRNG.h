@@ -1,10 +1,3 @@
-/*******************************************************************************
-GPU OPTIMIZED MONTE CARLO (GOMC) BETA 0.97 (GPU version)
-Copyright (C) 2015  GOMC Group
-
-A copy of the GNU General Public License can be found in the COPYRIGHT.txt
-along with this program, also can be found at <http://www.gnu.org/licenses/>.
-********************************************************************************/
 
 #ifndef PRNG_H
 #define PRNG_H
@@ -47,6 +40,9 @@ class PRNG
 
    //Generate a double on a [0,b]
    double rand(double const bound) { return gen->rand(bound); }
+   //Generate a double on a [0,b)
+   double randExc(double const bound) { return gen->randExc(bound); }//v1
+
 
    //Generate an unsigned int on [0,bound]
    uint randInt(const uint bound) { return (uint)(gen->randInt(bound)); }
@@ -55,14 +51,7 @@ class PRNG
    uint randIntExc(const uint bound) { return (uint)(gen->randInt(bound-1)); }
    
    //Generates number on (-bound,bound)
-  double Sym(double bound) { 
-	   
-	   double r= gen->rand();
-
-	  // printf("rad=%f\n",r);
-	   return 2*bound*r - bound; 
-  
-  }
+  double Sym(double bound) { return 2*bound*gen->rand() - bound; }
    
    /////////////////////////////
    //   GENERATION FUNCTIONS  //
@@ -76,10 +65,27 @@ class PRNG
    }
 
    //Used to pick first position of
-   void FillWithRandom(XYZArray & loc, const uint len, XYZ const& axis)
+  void FillWithRandom(XYZArray & loc, const uint len, XYZ const& axis)//v1
    {
-      for (uint i = 0; i < len; ++i)
-         loc.Set(i, rand(axis.x), rand(axis.y), rand(axis.z));
+     for (uint i = 0; i < len; ++i)
+       {  
+		  /* double x,y,z;
+
+		  x= randExc(axis.x);
+		  y=randExc(axis.y);
+		  z= randExc(axis.z);*/
+
+		   loc.Set(i, randExc(axis.x), randExc(axis.y), randExc(axis.z));
+
+		 //  loc.Set(i, x,y,x);
+
+
+
+	 // printf("rand (%f,%f,%f)\n",x,y,z);
+	   
+	  }
+
+
    }
 
    void FillWithRandomOnSphere(XYZArray & loc, const uint len, 
@@ -343,5 +349,4 @@ inline void PRNG::saveState(const char* filename)
 }
 
 #endif /*PRNG_H*/
-
 

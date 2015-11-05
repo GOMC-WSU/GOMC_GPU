@@ -1,13 +1,7 @@
-/*******************************************************************************
-GPU OPTIMIZED MONTE CARLO (GOMC) BETA 0.97 (GPU version)
-Copyright (C) 2015  GOMC Group
-
-A copy of the GNU General Public License can be found in the COPYRIGHT.txt
-along with this program, also can be found at <http://www.gnu.org/licenses/>.
-********************************************************************************/
 #include "MoleculeKind.h"
 #include "MolSetup.h"
 #include "FFSetup.h"
+#include "Forcefield.h"
 #include "PDBConst.h" //For resname length.
 #include "PRNG.h"
 #include "Geometry.h"
@@ -15,6 +9,7 @@ along with this program, also can be found at <http://www.gnu.org/licenses/>.
 #include "CBMC.h"
 
 #include <vector>
+#include <map>
 #include <string>
 #include <cstdio>
 #include <algorithm>
@@ -25,16 +20,21 @@ along with this program, also can be found at <http://www.gnu.org/licenses/>.
 
 
 void MoleculeKind::Init
-(std::string const& l_name, Setup const& setup, Forcefield const& forcefield, 
+(std::string const& l_name, Setup const& setup,
+ Forcefield const& forcefield, System& sys)
 
- System& sys)
+
+
 {
    mol_setup::MolMap::const_iterator dataIterator =
       setup.mol.kindMap.find(l_name);
    if(dataIterator == setup.mol.kindMap.end())
    {
-      fprintf(stderr, "Error: Molecule %s not found in PDB file. Exiting.",
-              l_name.c_str());
+      std::cerr << "================================================"
+		<< std::endl << std::endl
+		<< "Error: Molecule " << l_name
+		<< " not found in PDB file. Exiting." << std::endl;
+
       exit(EXIT_FAILURE);
    }
    const mol_setup::MolKind& molData = dataIterator->second;
@@ -42,14 +42,59 @@ void MoleculeKind::Init
 
 #if ENSEMBLE == GCMC
    std::map<std::string, double>::const_iterator kindCPIt =
-      setup.config.sys.chemPot.cp.find(name);
-   chemPot = kindCPIt->second;
+      setup.config.sys.chemPot.cp.find(name),
+      lastOne = setup.config.sys.chemPot.cp.end();
+   
+   //If we don't find a chemical potential for a kind in GCMC mode,
+   //then quit.
+   if (kindCPIt == lastOne)
+   {
+      std::cerr << "================================================"
+                << std::endl << std::endl
+		<< "Error: chemical potential is missing for "
+		<< name <<"." << std::endl << std::endl
+		<< "Here are the listed chemical potentials:"
+		<< std::endl
+		<< "----------------------------------------"
+		<< std::endl;
+      
+      //Print out whatever chemical potentials were read.
+      for (kindCPIt = setup.config.sys.chemPot.cp.begin();
+	   kindCPIt != lastOne;
+	   ++kindCPIt)
+      {
+	 std::cerr << "Resname: " << kindCPIt->first
+		   << "      Value: " << kindCPIt->second
+		   << std::endl;
+      }
+      exit(EXIT_FAILURE);
+   }
+   else
+   {
+      chemPot = kindCPIt->second;
+   }
 #endif
    
    InitAtoms(molData);
 
    //Once-through topology objects
-   nonBonded.Init(molData);
+
+   if(forcefield.OneThree)
+   {
+     nonBonded_1_4 = new Nonbond_1_3; 
+     nonBonded_1_4->Init(molData);
+   }
+   if(forcefield.OneFour)
+   {
+     nonBonded_1_4 = new Nonbond_1_4;
+     nonBonded_1_4->Init(molData);
+   }
+   if (forcefield.OneN)
+   {
+     nonBonded.Init(molData);
+   }
+
+   sortedNB_1_4.Init(*nonBonded_1_4, numAtoms);
    sortedNB.Init(nonBonded, numAtoms);
    bondList.Init(molData.bonds);
    angles.Init(molData.angles, bondList);
@@ -63,7 +108,7 @@ void MoleculeKind::Init
 
 MoleculeKind::MoleculeKind() : angles(3), dihedrals(4),
    atomMass(NULL), atomCharge(NULL), builder(NULL), 
-   atomKind(NULL)
+			       atomKind(NULL), nonBonded_1_4(NULL)
 {}
 
 MoleculeKind::~MoleculeKind()
@@ -72,6 +117,7 @@ MoleculeKind::~MoleculeKind()
    delete[] atomMass;
    delete[] atomCharge;
    delete builder;
+   delete[] nonBonded_1_4;
 }
 
 
@@ -97,4 +143,3 @@ void MoleculeKind::InitAtoms(mol_setup::MolKind const& molData)
       atomKind[i] = atom.kind;
    }
 }
-

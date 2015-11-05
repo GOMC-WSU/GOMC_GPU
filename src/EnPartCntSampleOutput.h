@@ -1,10 +1,3 @@
-/*******************************************************************************
-GPU OPTIMIZED MONTE CARLO (GOMC) BETA 0.97 (GPU version)
-Copyright (C) 2015  GOMC Group
-
-A copy of the GNU General Public License can be found in the COPYRIGHT.txt
-along with this program, also can be found at <http://www.gnu.org/licenses/>.
-********************************************************************************/
 #ifndef EN_PART_CNT_SAMPLE_OUTPUT_H
 #define EN_PART_CNT_SAMPLE_OUTPUT_H
 
@@ -26,7 +19,7 @@ namespace config_setup { class Output; }
 
 struct EnPartCntSample : OutputableBase
 {
-   EnPartCntSample(OutputVars & v) { this->var = &v; }
+   EnPartCntSample(OutputVars & v);
 
    ~EnPartCntSample();
 
@@ -55,11 +48,10 @@ struct EnPartCntSample : OutputableBase
    //samplesE --> per box; samplesN --> per kind, per box
    double * samplesE [BOXES_WITH_U_NB];
    uint ** samplesN [BOXES_WITH_U_NB], stepsPerSample, samplesCollectedInFrame;
-   std::ofstream outF;
+   std::ofstream outF[BOXES_WITH_U_NB];
    std::string name [BOXES_WITH_U_NB];
 };
 
 #endif /*ENSEMBLE==GCMC*/
 
 #endif /*EN_PART_CNT_SAMPLE_OUTPUT_H*/
-

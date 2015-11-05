@@ -1,10 +1,3 @@
-/*******************************************************************************
-GPU OPTIMIZED MONTE CARLO (GOMC) BETA 0.97 (GPU version)
-Copyright (C) 2015  GOMC Group
-
-A copy of the GNU General Public License can be found in the COPYRIGHT.txt
-along with this program, also can be found at <http://www.gnu.org/licenses/>.
-********************************************************************************/
 
 #ifndef FF_SETUP_H
 #define FF_SETUP_H
@@ -23,6 +16,7 @@ namespace ff_setup
 {
    extern const double KCAL_PER_MOL_TO_K; //503.21959899;
    extern const double RIJ_OVER_2_TO_SIG; //1.7817974362807;
+   extern const double RIJ_TO_SIG; //0.890898718
 
    struct FFBase : SearchableBase
    {
@@ -64,6 +58,34 @@ namespace ff_setup
       void PrintBrief();
 #endif
    };
+
+struct NBfix : ReadableBaseWithFirst, FFBase
+   {
+     std::vector<double> sigma, epsilon, sigma_1_4, epsilon_1_4;
+#ifdef MIE_INT_ONLY
+     std::vector<uint> n, n_1_4;
+#else
+     std::vector<double> n, n_1_4;
+#endif
+
+      NBfix() : FFBase(2) {}
+
+      virtual void Read(Reader & param, std::string const& firstVar);
+      void Add(double e, double s,
+#ifdef MIE_INT_ONLY
+const uint expN,
+#else
+const double expN,
+#endif
+	       double e_1_4, double s_1_4,
+#ifdef MIE_INT_ONLY
+const uint expN_1_4
+#else
+const double expN_1_4
+#endif
+	       );
+   };
+
 
    struct Bond : ReadableBaseWithFirst, FFBase
    {
@@ -132,6 +154,7 @@ namespace ff_setup
 struct FFSetup
 {
    ff_setup::Particle mie;
+   ff_setup::NBfix nbfix;
 
    ff_setup::Bond bond;
    ff_setup::Angle angle;
@@ -154,5 +177,4 @@ struct FFSetup
 
 
 #endif /*FF_SETUP_H*/
-
 

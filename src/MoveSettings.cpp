@@ -1,10 +1,3 @@
-/*******************************************************************************
-GPU OPTIMIZED MONTE CARLO (GOMC) BETA 0.97 (GPU version)
-Copyright (C) 2015  GOMC Group
-
-A copy of the GNU General Public License can be found in the COPYRIGHT.txt
-along with this program, also can be found at <http://www.gnu.org/licenses/>.
-********************************************************************************/
 #include "MoveSettings.h" //header spec.
 #include "BoxDimensions.h" //For axis sizes
 #include "StaticVals.h" //For init info.
@@ -27,28 +20,25 @@ void MoveSettings::Init(StaticVals const& statV)
 	 tempTries[m] = 0;
 	 tempAccepted[m] = 0;
 	 mv::GetMoveMajIndex(maj, subDiv, m);	 
-	 //baseAdjust * 
-	 /*   ( statV.movePerc[maj] / subDiv / statV.totalPerc );
-	 if (perAdjust[m]==0)
-	 {
-	    perAdjust[m] = statV.simEventFreq.total;
-	    }*/
+	
       }
       acceptPercent[m] = 0.0;
       accepted[m] = tries[m] = 0;
    }
+  #if ENSEMBLE == NVT || ENSEMBLE == GCMC 
    scale[mv::DISPLACE] = boxDimRef.axis.Min(0)/4;
-
-#if ENSEMBLE == GEMC
+   scale[mv::ROTATE] = M_PI_4;
+#elif ENSEMBLE == GEMC
+   scale[mv::DISPLACE] = boxDimRef.axis.Min(0)/4;
    scale[mv::DISPLACE+1] = boxDimRef.axis.Min(1)/4;
-#endif
 
-   scale[mv::ROTATE*BOXES_WITH_U_NB] = M_PI_4;
 
-#if ENSEMBLE == GEMC
+   scale[mv::ROTATE*BOX_TOTAL] = M_PI_4;
+
+
    scale[mv::ROTATE*BOX_TOTAL+1] = M_PI_4;
-   scale[mv::VOL_TRANSFER*BOX_TOTAL] = 
-      scale[mv::VOL_TRANSFER*BOX_TOTAL+1] = 500;
+   scale[mv::VOL_TRANSFER*BOX_TOTAL] = 500;
+   scale[mv::VOL_TRANSFER*BOX_TOTAL+1] = 500;
    GEMC_KIND = statV.kindOfGEMC;
 #endif
 }
@@ -97,7 +87,7 @@ void MoveSettings::Update(const bool isAccepted, const uint moveIndex,
          if (m >= mv::MOL_TRANSFER)
             --majMoveKind;
 #else
-	 uint majMoveKind = m/2;
+	  uint majMoveKind = m/BOX_TOTAL;
 
 
 

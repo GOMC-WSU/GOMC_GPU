@@ -1,10 +1,3 @@
-/*******************************************************************************
-GPU OPTIMIZED MONTE CARLO (GOMC) BETA 0.97 (GPU version)
-Copyright (C) 2015  GOMC Group
-
-A copy of the GNU General Public License can be found in the COPYRIGHT.txt
-along with this program, also can be found at <http://www.gnu.org/licenses/>.
-********************************************************************************/
 
 #include "MoleculeLookup.h" //Header spec.
 #include "EnsemblePreprocessor.h" //For box total
@@ -81,28 +74,43 @@ void MoleculeLookup::TotalAndDensity
 (uint * numByBox, uint * numByKindBox, double * molFractionByKindBox,
  double * densityByKindBox, double const*const volInv) const
 { 
-   uint index = 0, mfIndex = 0;
-   for (uint b = 0; b < BOX_TOTAL; b++)
+   double invBoxTotal = 0;
+   uint mkIdx1, mkIdx2, sum;
+   sum = mkIdx1 = mkIdx2 = 0;
+
+   for (uint b = 0; b < BOX_TOTAL; ++b)
    {
-      uint sum = 0;
-      for (uint k = 0; k < numKinds; k++)
+      sum = 0;
+      for (uint k = 0; k < numKinds; ++k)
       {
 	 uint numMK = NumKindInBox(k, b);
-	 numByKindBox[index] = numMK;
-	 densityByKindBox[index] = numByKindBox[index] * volInv[b];
+	 numByKindBox[mkIdx1] = numMK;
+	 densityByKindBox[mkIdx1] = numByKindBox[mkIdx1] * volInv[b];
 	 sum += numMK;
-	 index++;
+	 ++mkIdx1;
+
       }
       numByBox[b] = sum;
       //Calculate mol fractions
-      double invBoxTotal = 1.0/sum;
+      if (sum > 0)
+	 invBoxTotal = 1.0/sum;
       if (numKinds > 1)
-	 for (uint k = 0; k < numKinds; k++)
+      {
+	 for (uint k = 0; k < numKinds; ++k)
 	 {
-	    molFractionByKindBox[mfIndex] = 
-	       numByKindBox[mfIndex] * invBoxTotal;
-	    ++mfIndex;
+	    if (sum > 0)
+	    {
+	       molFractionByKindBox[mkIdx2] = 
+		  numByKindBox[mkIdx2] * invBoxTotal;
+	    }
+	    else
+	    {
+	       molFractionByKindBox[mkIdx2] = 0.0;
+	    }
+	    ++mkIdx2;
+
 	 }
+      }
    }
 }
 
@@ -190,5 +198,4 @@ MoleculeLookup::box_iterator MoleculeLookup::BoxEnd(const uint box) const
 {
    return box_iterator(molLookup, boxAndKindStart + (box + 1) * numKinds);
 }
-
 

@@ -1,10 +1,3 @@
-/*******************************************************************************
-GPU OPTIMIZED MONTE CARLO (GOMC) BETA 0.97 (GPU version)
-Copyright (C) 2015  GOMC Group
-
-A copy of the GNU General Public License can be found in the COPYRIGHT.txt
-along with this program, also can be found at <http://www.gnu.org/licenses/>.
-********************************************************************************/
 #include "Molecules.h"
 #include "Setup.h"
 #include "PDBSetup.h" //For init
@@ -66,10 +59,10 @@ void Molecules::Init(Setup& setup, Forcefield& forcefield,
          for(uint pI = 0; pI < kinds[i].NumAtoms(); ++pI) {
             for(uint pJ = 0; pJ < kinds[j].NumAtoms(); ++pJ) {
             pairEnCorrections[i*kindsCount+j] += 
-               forcefield.particles.EnergyLRC(kinds[i].AtomKind(pI), 
+               forcefield.particles->EnergyLRC(kinds[i].AtomKind(pI), 
 					      kinds[j].AtomKind(pJ));
             pairVirCorrections[i*kindsCount+j] += 
-               forcefield.particles.VirialLRC(kinds[i].AtomKind(pI), 
+               forcefield.particles->VirialLRC(kinds[i].AtomKind(pI), 
 					      kinds[j].AtomKind(pJ));
             }
          }
@@ -82,5 +75,4 @@ void Molecules::Init(Setup& setup, Forcefield& forcefield,
    }
 
 }
-
 

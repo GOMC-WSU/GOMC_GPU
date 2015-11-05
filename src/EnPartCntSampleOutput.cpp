@@ -1,10 +1,3 @@
-/*******************************************************************************
-GPU OPTIMIZED MONTE CARLO (GOMC) BETA 0.97 (GPU version)
-Copyright (C) 2015  GOMC Group
-
-A copy of the GNU General Public License can be found in the COPYRIGHT.txt
-along with this program, also can be found at <http://www.gnu.org/licenses/>.
-********************************************************************************/
 #include "EnPartCntSampleOutput.h"
 #include "PDBConst.h"
 #include "OutConst.h"
@@ -12,15 +5,26 @@ along with this program, also can be found at <http://www.gnu.org/licenses/>.
 #include "ConfigSetup.h"
 #include "System.h"
 
+#include <limits> // for std::numeric_limit
+
 #if ENSEMBLE == GCMC
+
+EnPartCntSample::EnPartCntSample(OutputVars & v)
+{
+	this->var = &v;
+	for (uint b = 0; b < BOXES_WITH_U_NB; ++b)
+	{
+		samplesE[b] = NULL;
+		samplesN[b] = NULL;
+	}
+}
 
 EnPartCntSample::~EnPartCntSample()
 {
    for (uint b = 0; b < BOXES_WITH_U_NB; ++b)
    {
+      if (outF[b].is_open()) outF[b].close();
       if (samplesE[b] != NULL) delete[] samplesE[b];
-      for (uint k = 0; k < var->numKinds; ++k)
-         if (samplesN[b][k] != NULL) delete[] samplesN[b][k];
       if (samplesN[b] != NULL) delete[] samplesN[b];
    }
 }
@@ -31,8 +35,9 @@ void EnPartCntSample::Init(pdb_setup::Atoms const& atoms,
    InitVals(output.statistics.settings.hist);
    if (enableOut)
    {
-      stepsPerSample = output.statistics.settings.hist.frequency /
-         output.state.files.hist.samplesPerHist;
+      stepsPerSample = output.state.files.hist.stepsPerHistSample;
+      uint samplesPerFrame =
+	 output.statistics.settings.hist.frequency / stepsPerSample + 1;
       samplesCollectedInFrame = 0;
       for (uint b = 0; b < BOXES_WITH_U_NB; ++b)
       {
@@ -40,13 +45,13 @@ void EnPartCntSample::Init(pdb_setup::Atoms const& atoms,
                             output.state.files.hist.number,
                             output.state.files.hist.letter,
                             b);
-         samplesE[b] = new double [output.state.files.hist.samplesPerHist+1];
+         samplesE[b] = new double [samplesPerFrame];
          samplesN[b] = new uint * [var->numKinds];
          for (uint k = 0; k < var->numKinds; ++k)
          {
-            samplesN[b][k] =
-               new uint [output.state.files.hist.samplesPerHist+1];
+            samplesN[b][k] = new uint [samplesPerFrame];
          }
+	 outF[b].open(name[b].c_str(), std::ofstream::out);
       }
       WriteHeader();
    }
@@ -61,7 +66,8 @@ void EnPartCntSample::Sample(const ulong step)
    {
       for (uint b = 0; b < BOXES_WITH_U_NB; ++b)
       {
-         samplesE[b][samplesCollectedInFrame] = var->energyRef[b].total;
+         samplesE[b][samplesCollectedInFrame] =
+	   var->energyRef[b].inter + var->energyRef[b].tc;
          for (uint k = 0; k < var->numKinds; ++k)
          {
             samplesN[b][k][samplesCollectedInFrame] =
@@ -76,19 +82,19 @@ void EnPartCntSample::WriteHeader(void)
 {
    for (uint b = 0; b < BOXES_WITH_U_NB; ++b)
    {
-      outF.open(name[b].c_str(), std::ofstream::out);
-      if (outF.is_open())
+      if (outF[b].is_open())
       {
-         outF << var->T_in_K << " " << var->numKinds << " ";
+         outF[b] << var->T_in_K << " " << var->numKinds << " ";
 #if ENSEMBLE == GCMC
          for (uint k = 0; k < var->numKinds; k++)
          {
-            outF << var->kindsRef[k].chemPot << " ";
+            outF[b] << var->kindsRef[k].chemPot << " ";
          }
 #endif
          XYZ bAx = var->axisRef->Get(0);
-         outF << bAx.x << " " << bAx.y << " " << bAx.z << std::endl;
-         outF.close();
+         outF[b] << bAx.x << " " << bAx.y << " " << bAx.z << std::endl;
+	 outF[b] << std::setprecision(std::numeric_limits<double>::digits10+2);
+	 outF[b].setf(std::ios_base::left, std::ios_base::adjustfield);
       }
       else
          std::cerr << "Unable to write to file \"" <<  name[b] << "\" " 
@@ -103,22 +109,20 @@ void EnPartCntSample::DoOutput(const ulong step)
    //Output a sample in the form <N1,... Nk, E_total>
    for (uint b = 0; b < BOXES_WITH_U_NB; ++b)
    {
-      outF.open(name[b].c_str(), std::ofstream::app);
-      if (outF.is_open())
+      if (outF[b].is_open())
       {
          for (uint n = 0; n < samplesCollectedInFrame; ++n)
          {
             for (uint k = 0; k < var->numKinds; k++)
             {
-               outF << samplesN[b][k][n] << " ";
+               outF[b] << std::setw(11) << samplesN[b][k][n] << " ";
             }
-            outF << samplesE[b][n] << std::endl;
+            outF[b] << std::setw(25) << samplesE[b][n] << std::endl;
          }
       }
       else
          std::cerr << "Unable to write to file \"" <<  name[b] << "\" " 
                    << "(energy and part. num samples file)" << std::endl;
-      outF.close();
    }
    samplesCollectedInFrame = 0;
 }
@@ -145,4 +149,3 @@ std::string EnPartCntSample::GetFName(std::string const& sampleName,
 }
 
 #endif /*ENSEMBLE==GCMC*/
-

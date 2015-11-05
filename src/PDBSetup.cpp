@@ -1,10 +1,3 @@
-/*******************************************************************************
-GPU OPTIMIZED MONTE CARLO (GOMC) BETA 0.97 (GPU version)
-Copyright (C) 2015  GOMC Group
-
-A copy of the GNU General Public License can be found in the COPYRIGHT.txt
-along with this program, also can be found at <http://www.gnu.org/licenses/>.
-********************************************************************************/
 
 #include <vector>
 #include <map> //for function lookup table.
@@ -43,7 +36,8 @@ namespace pdb_setup
       HandleRemark(remNum, varName, readStep);
    }
 
-   void Remarks::HandleRemark(const uint num, std::string const& varName,
+   void Remarks::HandleRemark(const uint num,
+			      std::string const& varName,
 			      const ulong step)
    {
       switch (num)
@@ -64,7 +58,8 @@ namespace pdb_setup
       using namespace pdb_entry::remark::field;
       if (!str::compare(varName, name::STR_STEP)) //malformed PDB
       {
-	 std::cerr << "ERROR: Restart failed, GOMC file's step REMARK is "
+	 std::cerr << "ERROR: Restart failed, "
+		   << "GOMC file's step REMARK is "
 		   << "malformed." << std::endl << std::endl;
 	 exit(1);
       }
@@ -81,7 +76,8 @@ namespace pdb_setup
       using namespace pdb_entry::remark::field;
       if (!str::compare(varName, name::STR_GOMC))
       {
-	 std::cerr << "ERROR: Restart failed, GOMC file's identifying tag "
+	 std::cerr << "ERROR: Restart failed, "
+		   << "GOMC file's identifying tag "
 		   << "\"REMARK  1   GOMC\" is missing" 
 		   << std::endl << std::endl;
 	 exit(1);
@@ -91,9 +87,13 @@ namespace pdb_setup
    void Atoms::SetRestart(config_setup::RestartSettings const& r )
    { restart = r.enable; }
 
-   void Atoms::Assign(std::string const& atomName, std::string const& resName,
-		      const uint resNum, const char l_chain, const double l_x, 
-		      const double l_y, const double l_z, const double l_occ)
+   void Atoms::Assign(std::string const& atomName,
+		      std::string const& resName,
+		      const uint resNum, 
+		      const char l_chain, const double l_x, 
+
+		      const double l_y, const double l_z,
+		      const double l_occ)
    {
       if (!restart || currBox == 0)
       {
@@ -101,31 +101,36 @@ namespace pdb_setup
          box.push_back(currBox);
 	 atomAliases.push_back(atomName);
 	 resNamesFull.push_back(resName);
-	 if (resNum != currRes)
+	 if (resNum != currRes || firstResInFile)
 	 {
 	    startIdxRes.push_back(count);
 	    currRes = resNum;
 	    resNames.push_back(resName);
 	    chainLetter.push_back(l_chain);
 	    //Check if this kind of residue has been found
-	    uint kIndex = std::find(resKindNames.begin(), resKindNames.end(),
+	    uint kIndex = std::find(resKindNames.begin(),
+				    resKindNames.end(),
 				    resName) - resKindNames.begin();
 	    if (kIndex==resKindNames.size())
+	    {
 	       resKindNames.push_back(resName);
+	    }
 	    resKinds.push_back(kIndex);
 	 }
 	 x.push_back(l_x);
 	 y.push_back(l_y);
 	 z.push_back(l_z);
       }
-      else if (box[count]) //Overwrite members in 2nd box for restart file
+      else if (box[count]==currBox) 
       {
+	 //Overwrite members in 2nd box for restart file
 	 chainLetter[count] = l_chain;
 	 x[count] = l_x;
 	 y[count] = l_y;
 	 z[count] = l_z;
       }
       count++;
+      firstResInFile = false;
    }
 
    void Atoms::Read(FixedWidthReader & file)
@@ -141,7 +146,8 @@ namespace pdb_setup
 	 .Get(l_chain,field::chain::POS).Get(l_x,field::x::POS)
 	 .Get(l_y,field::y::POS).Get(l_z,field::z::POS)
 	 .Get(l_occ, field::occupancy::POS);
-      Assign(atomName, resName, resNum, l_chain, l_x, l_y, l_z, l_occ);
+      Assign(atomName, resName, resNum, l_chain, l_x, l_y, l_z,
+	     l_occ);
    }
 
 } //end namespace pdb_setup
@@ -154,8 +160,9 @@ void PDBSetup::Init(config_setup::RestartSettings const& restart,
    remarks.SetRestart(restart);
    atoms.SetRestart(restart);
 #ifndef NDEBUG
-   std::cout << (restart.enable?"Reading GOMC dumped restart PDB file(s).":
-         "Reading new system from PDB file(s).") << std::endl;
+   std::cout << (restart.enable?
+		 "Reading GOMC dumped restart PDB file(s).":
+		 "Reading new system from PDB file(s).") << std::endl;
 #endif
    for (uint b = 0; b < BOX_TOTAL; b++)
    {
@@ -166,19 +173,26 @@ void PDBSetup::Init(config_setup::RestartSettings const& restart,
       pdb.open();
       while (pdb.Read(varName, pdb_entry::label::POS))
       {
-         //If end of frame, and this is the frame we wanted, end read on this
+         //If end of frame, and this is the frame we wanted,
+	 //end read on this
          //file
-         if (remarks.reached && str::compare(varName, pdb_entry::end::STR))
+         if (remarks.reached &&
+	     str::compare(varName, pdb_entry::end::STR))
+	 {
             break;
-         //Call reader function if remarks were reached, or it is a remark
+	 }
+         //Call reader function if remarks were reached,
+	 // or it is a remark
+
          dataKind = dataKinds.find(varName);
          if (dataKind != dataKinds.end() && 
-               (remarks.reached || 
-                str::compare(dataKind->first,pdb_entry::label::REMARK)))
+	     (remarks.reached || 
+	      str::compare(dataKind->first,pdb_entry::label::REMARK)))
+	 {
             dataKind->second->Read(pdb);
+	 }
       }
       pdb.close();
    }
 }
-
 

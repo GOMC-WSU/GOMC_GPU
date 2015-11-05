@@ -1,10 +1,3 @@
-/*******************************************************************************
-GPU OPTIMIZED MONTE CARLO (GOMC) BETA 0.97 (GPU version)
-Copyright (C) 2015  GOMC Group
-
-A copy of the GNU General Public License can be found in the COPYRIGHT.txt
-along with this program, also can be found at <http://www.gnu.org/licenses/>.
-********************************************************************************/
 
 #ifndef COM_H
 #define COM_H
@@ -19,14 +12,14 @@ along with this program, also can be found at <http://www.gnu.org/licenses/>.
 class COM : public XYZArray
 {
  public:
-
+	  void operator=(const COM& b) {}
    //Declare a set of coordinates with no data (but must have proper frame
    //of reference).
    COM(BoxDimensions & box, XYZArray & coordinates, MoleculeLookup & molLook,
        Molecules const& mol) : 
       boxDimRef(box), coordRef(coordinates), molLookRef(molLook), molRef(mol) 
       {} 
-
+	 
    //Init from the coordinates grabbed from pdb file read.
    void CalcCOM();
    void SetNew(const uint m, const uint b);
@@ -79,5 +72,4 @@ inline void COM::SetNew(const uint m, const uint b)
 }
 
 #endif /*COM_H*/
-
 

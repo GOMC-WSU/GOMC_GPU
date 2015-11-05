@@ -1,10 +1,3 @@
-/*******************************************************************************
-GPU OPTIMIZED MONTE CARLO (GOMC) BETA 0.97 (GPU version)
-Copyright (C) 2015  GOMC Group
-
-A copy of the GNU General Public License can be found in the COPYRIGHT.txt
-along with this program, also can be found at <http://www.gnu.org/licenses/>.
-********************************************************************************/
 
 #ifndef COORDINATES_H
 #define COORDINATES_H
@@ -45,20 +38,19 @@ class Coordinates : public XYZArray
 
    //scale all in each mol newCOM[m]/oldCOM[m]
    void VolumeTransferTranslate
-      (uint & state, Coordinates &dest, COM & newCOM, BoxDimensions & newDim,
-       COM const& oldCOM, const uint bO, const uint bN, 
-       const double max) const;
+(uint & state, Coordinates & dest, COM & newCOM, BoxDimensions & newDim,
+ COM const& oldCOM, const double max) const;
 
    void VolumeTransferTranslate
 (uint & state, Coordinates & dest, COM & newCOM, BoxDimensions & newDim,
- COM const& oldCOM, const uint bO, const uint bN, const double max, double & scaleO, double & scaleN, double & randN ) const; // 
+ COM const& oldCOM,  const double max, double & scaleO, double & scaleN, double & randN ) const ;//
 
 //Helper for TranslateAll
    void TranslateOneBox(Coordinates & dest, COM & newCOM, COM const& oldCOM,
 			BoxDimensions const& newDim, const uint b, 
 			const double scale) const;
 
-     XYZ TmpShift;
+     //XYZ TmpShift;
  private:
 
    
@@ -73,5 +65,4 @@ class Coordinates : public XYZArray
 
 
 #endif /*COORDINATES_H*/
-
 

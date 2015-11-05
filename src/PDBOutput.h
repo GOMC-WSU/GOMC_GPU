@@ -1,10 +1,3 @@
-/*******************************************************************************
-GPU OPTIMIZED MONTE CARLO (GOMC) BETA 0.97 (GPU version)
-Copyright (C) 2015  GOMC Group
-
-A copy of the GNU General Public License can be found in the COPYRIGHT.txt
-along with this program, also can be found at <http://www.gnu.org/licenses/>.
-********************************************************************************/
 #ifndef PDB_OUTPUT_H
 #define PDB_OUTPUT_H
 
@@ -30,7 +23,13 @@ struct PDBOutput : OutputableBase
 {
  public:
    PDBOutput(System & sys, StaticVals const& statV);
-
+    ~PDBOutput()
+   {
+      for (uint b = 0; b < BOX_TOTAL; ++b)
+      {
+	 outF[b].close();
+      }
+   }
    //PDB does not need to sample on every step, so does nothing.
    virtual void Sample(const ulong step) {}
 
@@ -48,11 +47,25 @@ struct PDBOutput : OutputableBase
 
    void SetMolBoxVec(std::vector<uint> & mBox);
 
-   void PrintCryst1(const uint b);
+   void PrintCryst1(const uint b, Writer & out);
 
    void PrintAtoms(const uint b, std::vector<uint> & mBox);
 
-   void PrintEnd(const uint b) { outF[b].file << "END" << std::endl; }
+   //NEW_RESTART_CODE
+   void DoOutputRebuildRestart(const uint step);
+   void PrintAtomsRebuildRestart(const uint b);
+   void PrintCrystRest(const uint b, const uint step, Writer & out);
+   //NEW_RESTART_CODE
+   
+   void FormatAtom(std::string & line, const uint p, const uint m,
+		   const char chain, std::string const& atomAlias,
+		   std::string const& resName);
+
+   void InsertAtomInLine(std::string & line, XYZ const& coor,
+			 std::string const& occ = 
+			 pdb_entry::atom::field::occupancy::BOX[1]);
+
+   void PrintEnd(const uint b, Writer & out) { out.file << "END" << std::endl; }
    
    MoveSettings & moveSetRef;
    MoleculeLookup & molLookupRef;
@@ -61,8 +74,14 @@ struct PDBOutput : OutputableBase
    Coordinates & coordCurrRef;
 
    Writer outF[BOX_TOTAL];
+    //NEW_RESTART_CODE
+   Writer outRebuildRestart[BOX_TOTAL];
+   std::string outRebuildRestartFName[BOX_TOTAL];
+   bool enableRestOut;
+   ulong stepsRestPerOut;
+   //NEW_RESTART_CODE
+   bool enableOutState;
    std::vector<std::string> pStr;
 };
 
 #endif /*PDB_OUTPUT_H*/
-

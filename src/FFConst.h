@@ -1,10 +1,3 @@
-/*******************************************************************************
-GPU OPTIMIZED MONTE CARLO (GOMC) BETA 0.97 (GPU version)
-Copyright (C) 2015  GOMC Group
-
-A copy of the GNU General Public License can be found in the COPYRIGHT.txt
-along with this program, also can be found at <http://www.gnu.org/licenses/>.
-********************************************************************************/
 
 #ifndef FF_CONST_H
 #define FF_CONST_H
@@ -23,6 +16,7 @@ namespace ff
       extern const std::string WILD;  // "X"
       const uint nm_len = 3;
       const uint lj_n = 12;
+	  const uint lj_Cn = 4;
       //Flag to indicate whether particle is normal kind or should be handled
       //via Mie potential.
       namespace variety
@@ -77,5 +71,4 @@ namespace ff
 }
 
 #endif /*FF_CONST_H*/
-
 

@@ -1,10 +1,3 @@
-/*******************************************************************************
-GPU OPTIMIZED MONTE CARLO (GOMC) BETA 0.97 (GPU version)
-Copyright (C) 2015  GOMC Group
-
-A copy of the GNU General Public License can be found in the COPYRIGHT.txt
-along with this program, also can be found at <http://www.gnu.org/licenses/>.
-********************************************************************************/
 #include "BlockOutput.h"
 #include "PDBConst.h"
 #include "OutConst.h"
@@ -25,11 +18,13 @@ void BlockAverage::Init(const bool en, const double scale,
    block = new double[tot];
    uintSrc = new uint *[tot];
    dblSrc = new double *[tot];
-   first = enable = en;
+   enable = en;///
    scl = scale;
    if (enable)
    {
       name = GetFName(var, uniqueName);
+	   outF.open(name.c_str(), std::ofstream::out);///
+      outF.setf(std::ios_base::left, std::ios_base::adjustfield);///
       Zero();
       for (uint b = 0; b < tot; ++b)
       {
@@ -51,14 +46,18 @@ void BlockAverage::Sum(void)
 
 void BlockAverage::DoWrite(const ulong step)
 {
-   outF.open(name.c_str(), (first?std::ofstream::out:std::ofstream::app));
+   //outF.open(name.c_str(), (first?std::ofstream::out:std::ofstream::app));
    if (outF.is_open())
    {
-      outF << step;
+     outF << std::setw(11) << step;
       for (uint b = 0; b < tot; ++b)
-	 outF << " " << block[b];
+      {
+	 outF <<  " ";
+	 if (dblSrc[b] != NULL)
+	    outF << std::setw(25);
+	 outF << block[b];
+      }
       outF << std::endl;
-      outF.close();
    }
    else
       std::cerr << "Unable to write to file \"" <<  name << "\" " 
@@ -110,44 +109,25 @@ void BlockAverages::Sample(const ulong step)
 
 void BlockAverages::DoOutput(const ulong step)
 {  
-	GetDataFromGPU();
-	//printf("energy=%f======================\n",  virialRef->Total());
+	
    uint nextStep = step+1;
    for (uint v = 0; v < totalBlocks; v++)
       blocks[v].Write(nextStep, firstPrint);
 }
 
-void BlockAverages::GetDataFromGPU()
- {
-	/*cudaMemcpy(& sysRef->potential, sysRef->calcEnergy.Gpu_Potential, sizeof(SystemPotential), cudaMemcpyDeviceToHost);
 
-   T_in_K =  sysRef->statV.forcefield.T_in_K;
-   volumeRef = sysRef->boxDimRef.volume;
-   volInvRef = sysRef->boxDimRef.volInv;
-
-   energyRef->inter = sysRef->potential.boxEnergy->inter;
-   energyRef->intraBond = sysRef->potential.boxEnergy->intraBond;
-   energyRef->intraNonbond= sysRef->potential.boxEnergy->intraNonbond;
-   energyRef->tc= sysRef->potential.boxEnergy->tc;
-   energyRef->Total();
-
-  virialRef = sysRef->potential.boxVirial;
-  
-  virialRef->inter = sysRef->potential.boxVirial->inter;
- 
-  virialRef->tc= sysRef->potential.boxVirial->tc;
-  virialRef->Total();
-
-  kindsRef =  sysRef->statV.mol.kinds;
-  molLookupRef = &(sysRef->molLookupRef);*/
-
- }
 
 void BlockAverages::InitWatchSingle(config_setup::TrackedVars const& tracked)
 {
 
- blocks[out::ENERGY_TOTAL_IDX].Init(tracked.energy.block, invSteps, 
-				      out::ENERGY_TOTAL, uniqueName);
+  blocks[out::ENERGY_TOTAL_IDX].Init(tracked.energy.block, invSteps, 
+				      out::ENERGY_TOTAL, uniqueName, 
+				      BOXES_WITH_U_NB);
+
+
+
+   //Only output energy categories if specifically requested...
+#ifdef EN_SUBCAT_OUT
    blocks[out::ENERGY_INTER_IDX].Init(tracked.energy.block, invSteps, 
 				      out::ENERGY_INTER, uniqueName,
 				      BOXES_WITH_U_NB);
@@ -155,19 +135,24 @@ void BlockAverages::InitWatchSingle(config_setup::TrackedVars const& tracked)
 				   out::ENERGY_TC, uniqueName,
                                    BOXES_WITH_U_NB);
    blocks[out::ENERGY_INTRA_B_IDX].Init(tracked.energy.block, invSteps, 
-					out::ENERGY_INTRA_B, uniqueName);
+					out::ENERGY_INTRA_B, uniqueName,
+					BOXES_WITH_U_NB);
    blocks[out::ENERGY_INTRA_NB_IDX].Init(tracked.energy.block, invSteps, 
 					 out::ENERGY_INTRA_NB, uniqueName,
                                          BOXES_WITH_U_NB);
+#endif
    blocks[out::VIRIAL_TOTAL_IDX].Init(tracked.pressure.block, invSteps, 
 				      out::VIRIAL_TOTAL, uniqueName,
                                       BOXES_WITH_U_NB);
+#ifdef VIR_SUBCAT_OUT
    blocks[out::VIRIAL_INTER_IDX].Init(tracked.pressure.block, invSteps, 
 				      out::VIRIAL_INTER, uniqueName,
                                       BOXES_WITH_U_NB);
    blocks[out::VIRIAL_TC_IDX].Init(tracked.pressure.block, invSteps, 
 				   out::VIRIAL_TC, uniqueName,
                                    BOXES_WITH_U_NB);
+#endif
+
    blocks[out::PRESSURE_IDX].Init(tracked.pressure.block, invSteps, 
 				  out::PRESSURE, uniqueName,
                                   BOXES_WITH_U_NB);
@@ -181,31 +166,32 @@ void BlockAverages::InitWatchSingle(config_setup::TrackedVars const& tracked)
 #endif
 
 
-   for (uint b = 0; b < BOX_TOTAL; ++b)
-   {
-      blocks[out::ENERGY_TOTAL_IDX].SetRef(&var->energyRef[b].total, b);
-
-      blocks[out::ENERGY_INTRA_B_IDX].SetRef(&var->energyRef[b].intraBond, b);
-
-#if ENSEMBLE == GEMC
-      blocks[out::VOLUME_IDX].SetRef(&var->volumeRef[b], b);
-#endif 
-
-
-   }
 
    for (uint b = 0; b < BOXES_WITH_U_NB; ++b)
    {
-      blocks[out::ENERGY_INTER_IDX].SetRef(&var->energyRef[b].inter, b);
+      blocks[out::ENERGY_TOTAL_IDX].SetRef(&var->energyRef[b].total, b);
+
+#ifdef EN_SUBCAT_OUT
+      blocks[out::ENERGY_INTRA_B_IDX].SetRef(&var->energyRef[b].intraBond, b);
+	  blocks[out::ENERGY_INTER_IDX].SetRef(&var->energyRef[b].inter, b);
       blocks[out::ENERGY_TC_IDX].SetRef(&var->energyRef[b].tc, b);
       blocks[out::ENERGY_INTRA_NB_IDX].SetRef
 	 (&var->energyRef[b].intraNonbond, b);
+#endif
       blocks[out::VIRIAL_TOTAL_IDX].SetRef(&var->virialRef[b].total, b);
+#ifdef VIR_SUBCAT_OUT
       blocks[out::VIRIAL_INTER_IDX].SetRef(&var->virialRef[b].inter, b);
       blocks[out::VIRIAL_TC_IDX].SetRef(&var->virialRef[b].tc, b);
+#endif
       blocks[out::PRESSURE_IDX].SetRef(&var->pressure[b], b);
-   }     
 
+
+
+
+#if ENSEMBLE == GEMC
+      blocks[out::VOLUME_IDX].SetRef(&var->volumeRef[b], b);
+#endif
+   }    
 
 
 }
@@ -225,10 +211,10 @@ void BlockAverages::InitWatchMulti(config_setup::TrackedVars const& tracked)
       std::string trimKindName = var->kindsRef[k].name;
       name = out::MOL_NUM + "_" + trimKindName;
       blocks[bkStart + out::MOL_NUM_IDX*var->numKinds].Init
-	 (tracked.molNum.block, invSteps, name, uniqueName);
+	 (tracked.molNum.block, invSteps, name, uniqueName, BOXES_WITH_U_NB);
       name = out::DENSITY + "_" + trimKindName;
       blocks[bkStart + out::DENSITY_IDX*var->numKinds].Init
-	 (tracked.density.block, invSteps, name, uniqueName);
+	 (tracked.density.block, invSteps, name, uniqueName, BOXES_WITH_U_NB);
       //If more than one kind, output mol fractions.
       if (var->numKinds > 1)
 
@@ -238,10 +224,10 @@ void BlockAverages::InitWatchMulti(config_setup::TrackedVars const& tracked)
 	 name = out::MOL_FRACTION + "_" + trimKindName;
 	 blocks[bkStart + out::MOL_FRACTION_IDX*var->numKinds].Init
 
-	    (tracked.molNum.block, invSteps, name, uniqueName);
+	    (tracked.molNum.block, invSteps, name, uniqueName, BOXES_WITH_U_NB);
       }
 
-	  
+
       for (uint b = 0; b < BOX_TOTAL; ++b)
 
 
@@ -266,4 +252,3 @@ void BlockAverages::InitWatchMulti(config_setup::TrackedVars const& tracked)
 
 
 }
-

@@ -1,5 +1,5 @@
 /*******************************************************************************
-GPU OPTIMIZED MONTE CARLO (GOMC) BETA 0.97 (GPU version)
+GPU OPTIMIZED MONTE CARLO (GOMC) 1.0 (GPU version)
 Copyright (C) 2015  GOMC Group
 
 A copy of the GNU General Public License can be found in the COPYRIGHT.txt
@@ -17,7 +17,7 @@ namespace cbmc
 {
 
    void DCSingle::BuildOld(TrialMol& oldMol, uint molIndex)
-   {
+   {  // printf("DCsingle old\n");
       PRNG& prng = data->prng;
       XYZArray& positions = data->positions;
       uint nLJTrials = data->nLJTrialsFirst;
@@ -31,7 +31,10 @@ namespace cbmc
       std::fill_n(inter, nLJTrials, 0);
      // data->calc.ParticleInter(atom, positions, inter, molIndex, oldMol.GetBox());
 	  // data->calc.ParticleInter(inter, positions, atom, molIndex,                               oldMol.GetBox(), nLJTrials);
-	   data->calc.GetParticleEnergyGPU(oldMol.GetBox(), inter,positions, oldMol.molLength, oldMol.mOff, atom,oldMol.molKindIndex);
+
+	 //  data->calc.GetParticleEnergyGPU(oldMol.GetBox(), inter,positions, oldMol.molLength, oldMol.mOff, atom,oldMol.molKindIndex);
+	    data->calc.GetParticleEnergy(oldMol.GetBox(), inter,positions, oldMol.molLength, oldMol.mOff, atom,oldMol.molKindIndex,nLJTrials);
+	      //  printf("DC singleeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee\n");
 	   /*for (int trial = 0; trial < nLJTrials; ++trial)
 	   {
 	   printf("serial Trial %d energy=%f\n",trial,inter[trial] );
@@ -53,7 +56,7 @@ namespace cbmc
 	  printf("===================\n\n");*/
 
       for (uint trial = 0; trial < nLJTrials; ++trial)
-      {
+      { // printf("GPU Trial %d energy=%f\n",trial,inter[trial] );
          stepWeight += exp(-1 * data->ff.beta * inter[trial]);
       }
       oldMol.MultWeight(stepWeight);
@@ -62,7 +65,10 @@ namespace cbmc
    }
 
    void DCSingle::BuildNew(TrialMol& newMol, uint molIndex)
-   {
+   { //printf("DC singleeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee\n");
+	   // printf("DCsingle new\n");
+
+
       PRNG& prng = data->prng;
       XYZArray& positions = data->positions;
       uint nLJTrials = data->nLJTrialsFirst;
@@ -75,7 +81,8 @@ namespace cbmc
 
 
 	  //data->calc.ParticleInter(inter, positions, atom, molIndex,                               newMol.GetBox(), nLJTrials);
-	    data->calc.GetParticleEnergyGPU(newMol.GetBox(),  inter,positions, newMol.molLength, newMol.mOff, atom,newMol.molKindIndex);
+	 //   data->calc.GetParticleEnergyGPU(newMol.GetBox(),  inter,positions, newMol.molLength, newMol.mOff, atom,newMol.molKindIndex);
+	  data->calc.GetParticleEnergy(newMol.GetBox(),  inter,positions, newMol.molLength, newMol.mOff, atom,newMol.molKindIndex,nLJTrials);
 
 
 	  /*printf(" Energy for trials:\n==================================\n");
@@ -116,6 +123,8 @@ namespace cbmc
 
 	 // printf("gpu trial winner=%f\n", inter[winner]);
       newMol.AddAtom(atom, positions[winner]);
+	    //printf("DCsingle new done \n");
+
    }
 }
 

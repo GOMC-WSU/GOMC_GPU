@@ -1,10 +1,3 @@
-/*******************************************************************************
-GPU OPTIMIZED MONTE CARLO (GOMC) BETA 0.97 (GPU version)
-Copyright (C) 2015  GOMC Group
-
-A copy of the GNU General Public License can be found in the COPYRIGHT.txt
-along with this program, also can be found at <http://www.gnu.org/licenses/>.
-********************************************************************************/
 
 #ifndef PDB_CONST_H
 #define PDB_CONST_H
@@ -97,6 +90,18 @@ namespace pdb_entry
 	    static const ConstField POS(66,4); 
 	    static const std::string DEFAULT = "1";
 	 }
+	 namespace steps 
+	 { 
+	    static const ConstField POS(40,5);
+	    static const std::string STEP = "STEP:";
+	    static const char ALIGN = align::RIGHT;
+	 }
+	 namespace stepsNum 
+	 { 
+	    static const ConstField POS(45,12);
+	    static const uint PRECISION = 0;
+	    static const char ALIGN = align::RIGHT;
+	 }
       }
    }
    namespace atom
@@ -113,7 +118,7 @@ namespace pdb_entry
             static const ConstField POS(12,4);
          }
 	 namespace alt_location { static const ConstField POS(16,1); }
-	 namespace res_name { static const ConstField POS(17,3); }
+	 namespace res_name { static const ConstField POS(17,4); }//v1
 	 namespace chain { static const ConstField POS(21,1); }
 	 namespace res_num
 	 {
@@ -159,6 +164,5 @@ namespace pdb_entry
 }
 
 #endif /*PDB_CONST_H*/
-
 
 

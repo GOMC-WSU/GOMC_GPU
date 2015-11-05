@@ -1,10 +1,3 @@
-/*******************************************************************************
-GPU OPTIMIZED MONTE CARLO (GOMC) BETA 0.97 (GPU version)
-Copyright (C) 2015  GOMC Group
-
-A copy of the GNU General Public License can be found in the COPYRIGHT.txt
-along with this program, also can be found at <http://www.gnu.org/licenses/>.
-********************************************************************************/
 
 #include "Simulation.h"
 #include "GOMC_Config.h"    //For version number
@@ -20,22 +13,38 @@ along with this program, also can be found at <http://www.gnu.org/licenses/>.
 #define HOSTNAME
 #endif
 
+#define GOMCMajor 1
+#define GOMCMinor 0
+
 namespace{
-   
-    void PrintSimulationHeader();
-    void PrintSimulationFooter();
-}
 
-int main(void)
+	void PrintSimulationHeader();
+	void PrintSimulationFooter();
+}
+void PrintTime(char * sTime)
 {
-   const char * nm = "in.dat";
-   
-   Simulation sim(nm);
-   sim.RunSimulation();
- 
-   return 0;
-}
 
+	// current date/time based on current system
+	time_t now = time(0);
+
+	// convert now to string form
+	char* dt = ctime(&now);
+
+	cout<<"\n    ============================= GOMC "<<GOMCMajor<<"."<<GOMCMinor<<" =============================\n\n";
+	cout << "         Simulation "<<sTime<< " date and time is: " << dt<<endl ;
+	cout<<"    ====================================================================\n\n";
+
+
+}
+int main(void)
+{   PrintTime("start");
+const char * nm = "in.dat";
+
+Simulation sim(nm);
+sim.RunSimulation();
+PrintTime("end");
+return 0;
+}
 
 
 

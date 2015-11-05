@@ -1,5 +1,5 @@
 /*******************************************************************************
-GPU OPTIMIZED MONTE CARLO (GOMC) BETA 0.97 (GPU version)
+GPU OPTIMIZED MONTE CARLO (GOMC) 1.0 (GPU version)
 Copyright (C) 2015  GOMC Group
 
 A copy of the GNU General Public License can be found in the COPYRIGHT.txt
@@ -98,7 +98,7 @@ namespace cbmc
       for (uint i = 0; i < nTrials; ++i)
       {
          data->angles[i] = data->prng.rand(M_PI);
-         data->angleEnergy[i] = data->ff.angles.Calc(kind, data->angles[i]);
+         data->angleEnergy[i] = data->ff.angles->Calc(kind, data->angles[i]);
          data->angleWeights[i] = exp(data->angleEnergy[i] * -data->ff.beta);
       }
    }
@@ -144,7 +144,7 @@ namespace cbmc
       {
 	 
          oldMol.OldThetaAndPhi(bonded[b], focus, theta[b], phi[b]);
-         double thetaEnergy = ff.angles.Calc(angleKinds[b][b], theta[b]);
+         double thetaEnergy = ff.angles->Calc(angleKinds[b][b], theta[b]);
          thetaWeight[b] += exp(-ff.beta * thetaEnergy);
          bendEnergy += thetaEnergy;
 
@@ -159,7 +159,7 @@ namespace cbmc
 	       double sinTerm = sin(theta[b]) * sin(theta[c]);
 	       double bfcTheta = acos(sinTerm * cos(phi[b] - phi[c]) + 
 				      cosTerm);
-	       phiEnergy += ff.angles.Calc(angleKinds[b][c], bfcTheta);
+	       phiEnergy += ff.angles->Calc(angleKinds[b][c], bfcTheta);
 	    }
 	    phiWeight[b] = exp(-ff.beta * phiEnergy);
 	    bendEnergy += phiEnergy;
@@ -190,7 +190,7 @@ namespace cbmc
             {
                double bfcTheta = acos(sinTerm * cos(angles[i] - phi[c]) +
 				      cosTerm);
-               energies[i] += data->ff.angles.Calc(angleKinds[b][c], bfcTheta);
+               energies[i] += data->ff.angles->Calc(angleKinds[b][c], bfcTheta);
             }
          }
          //calculate weights from combined energy
@@ -228,7 +228,7 @@ namespace cbmc
 	       double sinTerm = sin(theta[b]) * sin(theta[c]);
 	       double bfcTheta = acos(sinTerm * cos(angles - phi[c]) 
 				      + cosTerm);
-	       energies += data->ff.angles.Calc(angleKinds[b][c], bfcTheta);
+	       energies += data->ff.angles->Calc(angleKinds[b][c], bfcTheta);
 	    }
 	    
 	    //calculate weights from combined energy

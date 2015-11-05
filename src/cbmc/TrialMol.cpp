@@ -1,5 +1,5 @@
 /*******************************************************************************
-GPU OPTIMIZED MONTE CARLO (GOMC) BETA 0.97 (GPU version)
+GPU OPTIMIZED MONTE CARLO (GOMC) 1.0 (GPU version)
 Copyright (C) 2015  GOMC Group
 
 A copy of the GNU General Public License can be found in the COPYRIGHT.txt
@@ -103,7 +103,7 @@ XYZ TrialMol::RawRectCoords(double bond, double theta, double phi) const
    result.x *= sinTh * cos(phi);
    result.y *= sinTh * sin(phi);
    result.z *= cos(theta);
-   //  printf("%f,%f,%f\n", result.x, result.y, result.z );
+  //printf("(%f,%f,%f) rand\n",result.x,result.y,result.z);
    return growthToWorld.Apply(result);
 }
 

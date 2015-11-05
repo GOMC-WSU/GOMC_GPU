@@ -1,5 +1,5 @@
 /*******************************************************************************
-GPU OPTIMIZED MONTE CARLO (GOMC) BETA 0.97 (GPU version)
+GPU OPTIMIZED MONTE CARLO (GOMC) 1.0 (GPU version)
 Copyright (C) 2015  GOMC Group
 
 A copy of the GNU General Public License can be found in the COPYRIGHT.txt
@@ -16,6 +16,7 @@ along with this program, also can be found at <http://www.gnu.org/licenses/>.
 namespace num
 {
    static const double dbl_margin = 0.00001;
+   static const uint VDW_STD_KIND = 0, VDW_SHIFT_KIND = 1, VDW_SWITCH_KIND = 2;
 
    template <typename T>
    inline void BoundGt(double & val, const double bound)
@@ -49,7 +50,13 @@ namespace num
    inline double MeanA(std::vector<uint> const& v1,
                        std::vector<uint> const& v2,
                        const uint ix1, const uint ix2)
-   { return (v1[ix1]+v2[ix2])/2; }
+   { 
+#ifdef MIE_INT_ONLY
+     return (v1[ix1]+v2[ix2])/2;
+#else
+     return ((double)(v1[ix1]+v2[ix2]))/2.0;
+#endif
+   }
    //Geometric mean.
    inline double MeanG(std::vector<double> const& v1,
 		       std::vector<double> const& v2,

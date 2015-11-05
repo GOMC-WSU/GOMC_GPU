@@ -1,5 +1,5 @@
 /*******************************************************************************
-GPU OPTIMIZED MONTE CARLO (GOMC) BETA 0.97 (GPU version)
+GPU OPTIMIZED MONTE CARLO (GOMC) 1.0 (GPU version)
 Copyright (C) 2015  GOMC Group
 
 A copy of the GNU General Public License can be found in the COPYRIGHT.txt
@@ -55,11 +55,14 @@ void DCLinear::Build(TrialMol& oldMol, TrialMol& newMol, uint molIndex)
 {
    std::vector<DCComponent*>& comps =
      data.prng.randInt(1) ? forward : backward;
+
+   
+
    for(uint i = 0; i < comps.size(); ++i)
-   {
+   {  //printf("i=%d\n",i);
       comps[i]->PrepareNew();
       comps[i]->BuildNew(newMol, molIndex);
-   }
+   }//exit(0);
    for(uint i = 0; i < comps.size(); ++i)
    {
       comps[i]->PrepareOld();

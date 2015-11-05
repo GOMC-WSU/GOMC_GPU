@@ -1,10 +1,3 @@
-/*******************************************************************************
-GPU OPTIMIZED MONTE CARLO (GOMC) BETA 0.97 (GPU version)
-Copyright (C) 2015  GOMC Group
-
-A copy of the GNU General Public License can be found in the COPYRIGHT.txt
-along with this program, also can be found at <http://www.gnu.org/licenses/>.
-********************************************************************************/
 #include "EnsemblePreprocessor.h"
 #include "MolSetup.h"
 #include "../lib/StrLib.h"
@@ -644,6 +637,17 @@ namespace{
          unsigned int molBegin = firstAtom[i].first;
          //index AFTER last atom in molecule
          unsigned int molEnd = molBegin + currentMol.atoms.size();
+	 //continue if molecule has more that 3 atoms but has no dihedrals
+	 if(i == 0)
+	   { 
+	   // if it is the first molecule and index of dihedral is greater than
+	   // molBegin, it means it does not have any dihedral. It works when
+	   // we have only two molecule kinds.
+	   if(dih.a0 > molBegin && dih.a0 > molEnd)
+	   {
+	     continue;
+	   }
+	 }
          //scan to to first appearance of molecule
          while (dih.a0 < molBegin || dih.a0 >= molEnd)
          {
@@ -653,6 +657,11 @@ namespace{
                fprintf(stderr, "ERROR: Could not find all dihedrals in PSF file ");
                return READERROR;
             }
+	    //for case that molecule has more thatn 3 atoms and represend as 
+	    //second molecule but it has no dihedral. It works when
+	    // we have only two molecule kinds and no improper
+	    if (dih.a0 == 0)
+	      break;
          }
          //read in dihedrals
          while (dih.a0 >= molBegin && dih.a0 < molEnd)
@@ -673,4 +682,3 @@ namespace{
       return 0;
    }
 }
-

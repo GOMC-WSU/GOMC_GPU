@@ -1,5 +1,5 @@
 /*******************************************************************************
-GPU OPTIMIZED MONTE CARLO (GOMC) BETA 0.97 (GPU version)
+GPU OPTIMIZED MONTE CARLO (GOMC) 1.0 (GPU version)
 Copyright (C) 2015  GOMC Group
 
 A copy of the GNU General Public License can be found in the COPYRIGHT.txt
@@ -27,9 +27,6 @@ namespace cbmc
    public:
       explicit  DCData(System& sys, const Forcefield& forcefield,
 		       const Setup& set);
-
-	//  DCData(){};
-	  
       ~DCData();
 
        CalculateEnergy& calc;
@@ -42,7 +39,6 @@ namespace cbmc
       const uint nLJTrialsFirst;
       const uint nLJTrialsNth;
 
-
       //used for both angles and dihedrals
       double* angles;
       double* angleWeights;
@@ -52,6 +48,9 @@ namespace cbmc
       double* inter;          //intermolecule energies, reused for new and old
       double* bonded;
       double* nonbonded;      //calculated nonbonded energies
+	  //v1
+	  double* nonbonded_1_4;  //calculated nonbonded 1_4 energies and 1_3 in
+                              //case of Martini forcefield 
       double* ljWeights;
 
       XYZArray multiPositions[MAX_BONDS];
@@ -68,40 +67,23 @@ inline DCData::DCData(System& sys, const Forcefield& forcefield, const Setup& se
    uint maxLJTrials = nLJTrialsFirst;
    if ( nLJTrialsNth > nLJTrialsFirst )
      maxLJTrials = nLJTrialsNth;
-
-   /* for(uint i = 0; i < MAX_BONDS; ++i)
-   {
-       printf("max trials =%d\n", MAX_BONDS);
-	   for (int j=0;j< multiPositions[i].count;j++) 
-	  printf("%f,%f,%f\n", multiPositions[i].x[j], multiPositions[i].y[j],multiPositions[i].z[j]);
-
-
-
-   }*/
-
-
-
    for(uint i = 0; i < MAX_BONDS; ++i)
    {
       multiPositions[i] = XYZArray(maxLJTrials);
-
-
-	     /*printf("max trials =%d\n", MAX_BONDS);
-	   for (int j=0;j< maxLJTrials;j++) 
-	  printf("%f,%f,%f\n", multiPositions[i].x[j], multiPositions[i].y[j],multiPositions[i].z[j]);
-
-*/
-
    }
    inter = new double[maxLJTrials];
    bonded = new double[maxLJTrials];
    nonbonded = new double[maxLJTrials];
+   nonbonded_1_4 = new double[maxLJTrials];//v1
    ljWeights = new double[maxLJTrials];
 
    uint trialMax = std::max(nAngleTrials, nDihTrials);
    angleEnergy = new double[trialMax];
    angleWeights = new double[trialMax];
    angles = new double[trialMax];
+
+   sys.MaxTrialNumber= maxLJTrials;
+
 }
 
 inline DCData::~DCData()
@@ -109,6 +91,7 @@ inline DCData::~DCData()
    delete[] inter;
    delete[] bonded;
    delete[] nonbonded;
+   delete[] nonbonded_1_4;//v1
    delete[] ljWeights;
    delete[] angles;
    delete[] angleWeights;

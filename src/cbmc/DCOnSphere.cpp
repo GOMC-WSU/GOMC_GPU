@@ -1,5 +1,5 @@
 /*******************************************************************************
-GPU OPTIMIZED MONTE CARLO (GOMC) BETA 0.97 (GPU version)
+GPU OPTIMIZED MONTE CARLO (GOMC) 1.0 (GPU version)
 Copyright (C) 2015  GOMC Group
 
 A copy of the GNU General Public License can be found in the COPYRIGHT.txt
@@ -34,7 +34,7 @@ namespace cbmc
    }
 
    void DCOnSphere::BuildOld(TrialMol& oldMol, uint molIndex)
-   {
+   {  //  printf("DCsphere old\n");
       XYZArray& positions = data->positions;
       uint nLJTrials = data->nLJTrialsNth;
       data->prng.FillWithRandomOnSphere(positions, nLJTrials, bondLength,
@@ -51,7 +51,9 @@ namespace cbmc
      // data->calc.ParticleInter(atom, positions, inter, molIndex, oldMol.GetBox());
 	  //data->calc.ParticleInter(inter, positions, atom, molIndex,                               oldMol.GetBox(), nLJTrials);
 
-      data->calc.GetParticleEnergyGPU(oldMol.GetBox(),  inter,positions, oldMol.molLength, oldMol.mOff, atom,oldMol.molKindIndex);
+      //data->calc.GetParticleEnergyGPU(oldMol.GetBox(),  inter,positions, oldMol.molLength, oldMol.mOff, atom,oldMol.molKindIndex);
+	   data->calc.GetParticleEnergy(oldMol.GetBox(),  inter,positions, oldMol.molLength, oldMol.mOff, atom,oldMol.molKindIndex,nLJTrials);
+	     //printf("DC of spherrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr\n");
 	  /*  for (int trial = 0; trial < nLJTrials; ++trial)
 	   {
 	   printf("serial Trial %d energy=%f\n",trial,inter[trial] );
@@ -85,7 +87,9 @@ namespace cbmc
    }
 
    void DCOnSphere::BuildNew(TrialMol& newMol, uint molIndex)
-   {
+   { //printf("DC of spherrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr\n");
+	   // printf("DCsphere new\n");
+
        XYZArray& positions = data->positions;
       uint nLJTrials = data->nLJTrialsNth;
       data->prng.FillWithRandomOnSphere(positions, nLJTrials, bondLength,
@@ -101,7 +105,8 @@ namespace cbmc
 	  //data->calc.ParticleInter(inter, positions, atom, molIndex,                            newMol.GetBox(), nLJTrials);
 
 
-	   data->calc.GetParticleEnergyGPU(newMol.GetBox(),inter,positions, newMol.molLength, newMol.mOff, atom,newMol.molKindIndex);
+	   //data->calc.GetParticleEnergyGPU(newMol.GetBox(),inter,positions, newMol.molLength, newMol.mOff, atom,newMol.molKindIndex);
+	     data->calc.GetParticleEnergy(newMol.GetBox(),inter,positions, newMol.molLength, newMol.mOff, atom,newMol.molKindIndex,nLJTrials);
 	   /* for (int trial = 0; trial < nLJTrials; ++trial)
 	   {
 	   printf("serial Trial %d energy=%f\n",trial,inter[trial] );

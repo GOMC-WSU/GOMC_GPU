@@ -1,10 +1,3 @@
-/*******************************************************************************
-GPU OPTIMIZED MONTE CARLO (GOMC) BETA 0.97 (GPU version)
-Copyright (C) 2015  GOMC Group
-
-A copy of the GNU General Public License can be found in the COPYRIGHT.txt
-along with this program, also can be found at <http://www.gnu.org/licenses/>.
-********************************************************************************/
 
 #ifndef BOX_DIMENSIONS_H
 #define BOX_DIMENSIONS_H
@@ -43,7 +36,7 @@ struct BoxDimensions
 
    void SetVolume(const uint b, const double vol); //
 
-   uint ShiftVolume(BoxDimensions & newDim, double & scale, const uint b, const double delta) const; //
+   uint ShiftVolume(BoxDimensions & newDim, double & scale, const uint b, const double delta) const;
    
    //!Calculate and execute volume exchange based on transfer
    /*!\param newDim return reference for new dimensions
@@ -53,8 +46,8 @@ struct BoxDimensions
     * \param bN box index for box N
     * \param transfer determines amount to be transfered
     */
-   uint ExchangeVolume(BoxDimensions & newDim, double & scaleO, 
-		       double & scaleN, const uint bO, const uint bN, 
+   uint ExchangeVolume(BoxDimensions & newDim, double * scale, 
+
 		       const double transfer) const;
 
    //Vector btwn two points, accounting for PBC, on an individual axis
@@ -118,6 +111,17 @@ struct BoxDimensions
                const uint b) const;
 
    bool InRcut(double distSq) const { return (distSq < rCutSq); }
+   //v1
+   //Dist squared , two different coordinate arrays
+   void GetDistSq(double & distSq, XYZArray const& arr1,
+               const uint i, XYZArray const& arr2, const uint j,
+               const uint b) const;
+   //v1
+   //Dist squared with same coordinate array
+   void GetDistSq(double & distSq, XYZArray const& arr, const uint i,
+		  const uint j, const uint b) const;
+
+
    
    XYZArray axis;     //x, y, z dimensions of each box (a)
    XYZArray halfAx;   //x, y, z dimensions / 2 of each box (a)
@@ -175,13 +179,13 @@ inline double BoxDimensions::GetTotVolume() const
 
 inline void BoxDimensions::SetVolume(const uint b, const double vol)
 {
-	double newAxX_b = pow(vol, (1.0/3.0));
-	XYZ newAx_b(newAxX_b, newAxX_b, newAxX_b);
-	volume[b] = vol;
-	volInv[b] = 1.0/vol;
-	axis.Set(b, newAx_b);
-	newAx_b *= 0.5;
-	halfAx.Set(b, newAx_b);
+	 double newAxX_b = pow(vol, (1.0/3.0));
+   XYZ newAx_b(newAxX_b, newAxX_b, newAxX_b);
+   volume[b] = vol;
+   volInv[b] = 1.0/vol;
+   axis.Set(b, newAx_b);
+   newAx_b *= 0.5;
+   halfAx.Set(b, newAx_b);
 }
 
 inline XYZ BoxDimensions::MinImage(XYZ rawVec, const uint b) const
@@ -352,6 +356,26 @@ inline bool BoxDimensions::InRcut
 }
 #endif
 
+//v1
+inline void BoxDimensions::GetDistSq(double & distSq, XYZArray const& arr1,
+               const uint i, XYZArray const& arr2, const uint j,
+               const uint b) const
+{
+   XYZ dist = MinImage(arr1.Difference(i, arr2, j), b);
+   distSq = dist.x*dist.x + dist.y*dist.y + dist.z*dist.z;
+}
+//v1
+inline void BoxDimensions::GetDistSq
+(double & distSq, XYZArray const& arr, const uint i, const uint j,
+ const uint b) const
+{
+   XYZ dist = MinImage(arr.Difference(i, j), b);
+   distSq = dist.x*dist.x + dist.y*dist.y + dist.z*dist.z;
+}
+
+
+
+
 //Wrap one coordinate.
 inline XYZ BoxDimensions::WrapPBC(XYZ rawPos, const uint b) const
 { 
@@ -424,7 +448,7 @@ inline double BoxDimensions::WrapPBC(double& v, const double ax) const
    //Note: testing shows that it's most efficient to negate if true.
    //Source:
    // http://jacksondunstan.com/articles/2052
-   if ( v > ax ) //if +, wrap out to low end
+   if ( v >= ax ) //if +, wrap out to low end// v1
       v -= ax;
    else if ( v < 0 ) //if -, wrap to high end
       v += ax;
@@ -469,5 +493,4 @@ inline double BoxDimensions::UnwrapPBC
 }
 
 #endif /*BOX_DIMENSIONS_H*/
-
 

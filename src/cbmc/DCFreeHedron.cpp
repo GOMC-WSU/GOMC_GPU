@@ -1,5 +1,5 @@
 /*******************************************************************************
-GPU OPTIMIZED MONTE CARLO (GOMC) BETA 0.97 (GPU version)
+GPU OPTIMIZED MONTE CARLO (GOMC) 1.0 (GPU version)
 Copyright (C) 2015  GOMC Group
 
 A copy of the GNU General Public License can be found in the COPYRIGHT.txt
@@ -43,8 +43,9 @@ namespace cbmc {
 
 
    void DCFreeHedron::BuildNew(TrialMol& newMol, uint molIndex)
-   {
+   {  //printf("DCFREEHedron new\n");
       seed.BuildNew(newMol, molIndex);
+
       PRNG& prng = data->prng;
       const CalculateEnergy& calc = data->calc;
       const Forcefield& ff = data->ff;
@@ -57,11 +58,7 @@ namespace cbmc {
       const XYZ center = newMol.AtomPosition(hed.Focus());
       XYZArray* positions = data->multiPositions;
 
-	  /* for (uint b = 0; b < hed.NumBond() + 1; ++b)
-	   for (int i=0;i<positions[b].count;i++ )
-		 printf("pos %d (%f,%f,%f)\n", b, positions[b].x[i],positions[b].y[i],positions[b].z[i] );
-
-	   exit(0);*/
+	  
 
 
 	  //  printf("hedr=%d\n",hed.NumBond() );
@@ -76,7 +73,7 @@ namespace cbmc {
       //add anchor atom
       positions[hed.NumBond()].Set(0, newMol.RawRectCoords(anchorBond, 0, 0));
 
-
+	 
 
 	   /*for (uint b = 0; b < hed.NumBond() + 1; ++b)
 	   for (int i=0;i<positions[b].count;i++ )
@@ -84,20 +81,24 @@ namespace cbmc {
 
 	   exit(0);*/
 
+ /*for (uint b = 0; b < hed.NumBond()+1 ; ++b)
+	   for (int i=0;i<positions[b].count;i++ )
+		 printf("pos %d (%f,%f,%f)\n", b, positions[b].x[i],positions[b].y[i],positions[b].z[i] );
 
+	   exit(0);*/
 
 
 for (uint lj = nLJTrials; lj-- > 0;)
       {
 
-		  double r1=prng();
+		 /* double r1=prng();
 			  double r2=prng();
-			  double r3=prng();
+			  double r3=prng();*/
 
-			//  printf("%f,%f,%f\n", r1,r2,r3);
+			 // printf("%f,%f,%f\n", r1,r2,r3);
          //convert chosen torsion to 3D positions
          RotationMatrix spin =
-            RotationMatrix::UniformRandom(r1,r2,r3);
+            RotationMatrix::UniformRandom(prng(), prng(), prng());
 
 
 
@@ -107,30 +108,41 @@ for (uint lj = nLJTrials; lj-- > 0;)
                positions[b].Set(lj, spin.Apply(positions[b][0]));
                positions[b].Add(lj, center);
 
-			   /*  for (int i=0;i<positions[b].count;i++ )
-		 printf("pos %d (%f,%f,%f)\n", b, positions[b].x[i],positions[b].y[i],positions[b].z[i] );
-*/
+			  
 
          }
       }
-// exit(0);
+
+
+
+
+
+
       for (uint b = 0; b < hed.NumBond() + 1; ++b)
       { 
 		
          data->axes.WrapPBC(positions[b], newMol.GetBox());
          /*for (int i=0;i<positions[b].count;i++ )
-		 printf("pos %d (%f,%f,%f)\n", b, positions[b].x[i],positions[b].y[i],positions[b].z[i] );
-		*/
+		 printf("pos %d (%f,%f,%f)\n", b, positions[b].x[i],positions[b].y[i],positions[b].z[i] );*/
+		
       }
-	  //exit(0);
-
-
+	//  exit(0);
+//for (uint b = 0; b < hed.NumBond()+1 ; ++b)
+//	   for (int i=0;i<positions[b].count;i++ )
+//		 printf("pos %d (%f,%f,%f)\n", b, positions[b].x[i],positions[b].y[i],positions[b].z[i] );
+//
+// exit(0);
+//
       std::fill_n(inter, nLJTrials, 0.0);
       for (uint b = 0; b < hed.NumBond(); ++b)
       {
          // calc.ParticleInter(inter, positions[b], hed.Bonded(b), 			    molIndex, newMol.GetBox(), nLJTrials);
-		   data->calc.GetParticleEnergyGPU(newMol.GetBox(),  inter,positions[b], newMol.molLength, newMol.mOff, hed.Bonded(b),newMol.molKindIndex);// GPU call 
+		// data->calc.GetParticleEnergyGPU(newMol.GetBox(),  inter,positions[b], newMol.molLength, newMol.mOff, hed.Bonded(b),newMol.molKindIndex);// GPU call 
+		  data->calc.GetParticleEnergy(newMol.GetBox(),  inter,positions[b], newMol.molLength, newMol.mOff, hed.Bonded(b),newMol.molKindIndex,nLJTrials);// GPU call cell list
 
+		//   printf("energy of bond %d=%f\n", b, inter[b]);
+
+		    //printf("DCFree Hedrooooooooooooooooooooooooooooooon\n");
 		  // printf("box =%d, trials=%d, mol length=%d, mol kind index=%d\n",newMol.GetBox(), nLJTrials, newMol.molLength,newMol.molKindIndex);
 
 		  // printf("bonded = %d, moff=%d\n",hed.Bonded(b), newMol.mOff);
@@ -142,8 +154,8 @@ for (uint lj = nLJTrials; lj-- > 0;)
 	  {   printf("GPU Trial %d energy=%f\n",lj,inter[lj] );
 
 		 }*/
-	    data->calc.GetParticleEnergyGPU(newMol.GetBox(), inter,positions[hed.NumBond()], newMol.molLength, newMol.mOff,hed.Prev(),newMol.molKindIndex);// GPU call 
-
+	   // data->calc.GetParticleEnergyGPU(newMol.GetBox(), inter,positions[hed.NumBond()], newMol.molLength, newMol.mOff,hed.Prev(),newMol.molKindIndex);// GPU call 
+		data->calc.GetParticleEnergy(newMol.GetBox(), inter,positions[hed.NumBond()], newMol.molLength, newMol.mOff,hed.Prev(),newMol.molKindIndex,nLJTrials);// GPU call cell list
 		
 
 
@@ -171,7 +183,7 @@ for (uint lj = nLJTrials; lj-- > 0;)
    }
 
    void DCFreeHedron::BuildOld(TrialMol& oldMol, uint molIndex)
-   {
+   {   //printf("DCFREEHedron old\n");
       seed.BuildOld(oldMol, molIndex);
       PRNG& prng = data->prng;
       const CalculateEnergy& calc = data->calc;
@@ -226,14 +238,17 @@ for (uint lj = nLJTrials; lj-- > 0;)
        for (uint b = 0; b < hed.NumBond(); ++b)
       {
          // calc.ParticleInter(inter, positions[b], hed.Bonded(b),              molIndex, oldMol.GetBox(), nLJTrials);
-		 data->calc.GetParticleEnergyGPU(oldMol.GetBox(),  inter,positions[b], oldMol.molLength, oldMol.mOff, hed.Bonded(b),oldMol.molKindIndex);// GPU call
+		   //data->calc.GetParticleEnergyGPU(oldMol.GetBox(),  inter,positions[b], oldMol.molLength, oldMol.mOff, hed.Bonded(b),oldMol.molKindIndex);// GPU call
+		  data->calc.GetParticleEnergy(oldMol.GetBox(),  inter,positions[b], oldMol.molLength, oldMol.mOff, hed.Bonded(b),oldMol.molKindIndex,nLJTrials);// GPU call cell 
       }
       double stepWeight = 0;
       // calc.ParticleInter(inter, positions[hed.NumBond()], hed.Prev(),                 molIndex, oldMol.GetBox(), nLJTrials);
-	   data->calc.GetParticleEnergyGPU(oldMol.GetBox(),  inter,positions[hed.NumBond()], oldMol.molLength, oldMol.mOff,hed.Prev(),oldMol.molKindIndex);// GPU call 
+	 // data->calc.GetParticleEnergyGPU(oldMol.GetBox(),  inter,positions[hed.NumBond()], oldMol.molLength, oldMol.mOff,hed.Prev(),oldMol.molKindIndex);// GPU call 
 
-
+	 data->calc.GetParticleEnergy(oldMol.GetBox(),  inter,positions[hed.NumBond()], oldMol.molLength, oldMol.mOff,hed.Prev(),oldMol.molKindIndex,nLJTrials);// GPU call cell
       for (uint lj = 0; lj < nLJTrials; ++lj) {
+		  // printf("GPU Trial %d energy=%f, box=%d\n",lj,inter[lj], oldMol.GetBox() );
+
          stepWeight += exp(-ff.beta * inter[lj]);
       }
        for(uint b = 0; b < hed.NumBond(); ++b) {
