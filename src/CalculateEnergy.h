@@ -190,7 +190,7 @@ public:
 	double CellSize[BOX_TOTAL]; 
 	SystemPotential CalculateEnergyCellList();
 	SystemPotential CalculateNewEnergyCellList(BoxDimensions &newDim,SystemPotential curpot, int step);
-	SystemPotential CalculateNewEnergyCellListOneBox(BoxDimensions &newDim, int step, int bPick);
+	
 	double * dev_EnergyContribCELL_LIST;
 	double * dev_VirialContribCELL_LIST;
 
