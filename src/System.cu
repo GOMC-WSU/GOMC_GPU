@@ -964,20 +964,7 @@ SystemPotential System::NewConvCellListSystemTotalEnergy(uint majKind,SystemPote
 
 }
 
-SystemPotential System::NewConvCellListSystemTotalEnergyOneBox(uint majKind, int bPick)
-{
 
-	CreateAdjCellListForScaledMols(majKind);
-
-	LoadAtomsToCellsVolumeMove(majKind);
-
-	SystemPotential pot= calcEnergy.CalculateNewEnergyCellListOneBox(((VolumeTransfer*)moves[majKind])->newDim, step,bPick);
-
-	return pot;
-
-
-
-}
 
 
 
