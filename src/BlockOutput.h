@@ -6,7 +6,6 @@
 
 #include "../lib/BasicTypes.h" //For ulong, uint
 #include "EnergyTypes.h" //For energies.
-
 #include "MoleculeKind.h" //For kind names
 #include "MoleculeLookup.h" //for lookup array (to get density, kind cnts, etc.
 #include "OutConst.h"
@@ -15,22 +14,18 @@
 #include "StaticVals.h"
 #include "PDBSetup.h" //For atoms class.
 #include "BoxDimensions.h" //For BOXES_WITH_VOLUME
+
 #include <limits> //for std::numeric_limits
+
 class System;
-
-
-
-
-
-
-
 
 struct BlockAverage
 {
    BlockAverage(): enable(false), block(NULL), uintSrc(NULL), dblSrc(NULL) {}
    
    ~BlockAverage() 
-   {   if (outF.is_open())
+   { 
+      if (outF.is_open())
       {
 	 outF.close();
       }
@@ -55,9 +50,11 @@ struct BlockAverage
 
    //Set one of the pointers to the block values we're tracking
    void SetRef(double * loc, const uint b) 
-   {  dblSrc[b] = loc;
+   {
+      dblSrc[b] = loc;
       uintSrc[b] = NULL;
-      outF << std::setprecision(std::numeric_limits<double>::digits10+2) << std::setw(25); }
+      outF << std::setprecision(std::numeric_limits<double>::digits10+2) << std::setw(25);
+   }
    void SetRef(uint * loc, const uint b) 
    { uintSrc[b] = loc; dblSrc[b] = NULL; }
 
@@ -95,61 +92,32 @@ struct BlockAverage
 
 struct BlockAverages : OutputableBase
 {
-   BlockAverages(OutputVars & v){ this->var = &v; blocks = NULL; }//v1
+   BlockAverages(OutputVars & v){ this->var = &v; }
    
-  
-
-
+   ~BlockAverages(void) { if ( blocks != NULL ) delete[] blocks; }
    
-
-
    //No additional init.
    virtual void Init(pdb_setup::Atoms const& atoms,
                      config_setup::Output const& output);
    
    virtual void Sample(const ulong step);
-
    
    virtual void DoOutput(const ulong step);
- 
-
+  
  private:   
-
 
    void InitVals(config_setup::EventSettings const& event)
    {
-
       stepsPerOut = event.frequency;
       invSteps = 1.0/stepsPerOut;
       enableOut = event.enable;
    }
 
    void AllocBlocks(void);
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
    
    void InitWatchSingle(config_setup::TrackedVars const& tracked);
 
    void InitWatchMulti(config_setup::TrackedVars const& tracked);
-
-
 
    //Block vars
    BlockAverage * blocks;
@@ -158,22 +126,8 @@ struct BlockAverages : OutputableBase
    //Intermediate vars.
    uint samplesWrites;
 
-
    //Constants
    double invSteps;
-
-
-
-
-
-
-
-
-
-
-
-
-
 };
 
 #endif /*BLOCK_OUTPUT_H*/

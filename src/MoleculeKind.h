@@ -12,18 +12,17 @@
 
 #include <cassert>
 
-
-namespace mol_setup
-{ 
-   class Atom;
-   class MolKind; 
+namespace mol_setup {
+class Atom;
+class MolKind;
 }
-namespace ff_setup
-{
-   class Bond;
-   class FFBase;
+namespace ff_setup {
+class Bond;
+class FFBase;
 }
-namespace cbmc { class TrialMol; }
+namespace cbmc {
+class TrialMol;
+}
 
 class FFSetup;
 class PRNG;
@@ -32,70 +31,73 @@ class System;
 class Forcefield;
 class Setup;
 
+class MoleculeKind {
+public:
 
-class MoleculeKind
-{
- public:
-   
-   MoleculeKind();
-   ~MoleculeKind();
-   
-   uint NumAtoms() const { return numAtoms; }
-   uint NumBonds() const { return bondList.count; }
-   uint NumAngles() const { return angles.Count(); }
-   uint NumDihs() const { return dihedrals.Count(); }
-   uint AtomKind(const uint a) const { return atomKind[a]; }
-   
-   //Initialize this kind
-   //Exits program if param and psf files don't match
-   void Init(std::string const& l_name,
-             Setup const& setup,
-             Forcefield const& forcefield,
-	     System & sys);
-   
-   //Invoke CBMC, oldMol and newMol will be modified
-   void Build(cbmc::TrialMol& oldMol, cbmc::TrialMol& newMol,
-	      const uint molIndex)
-   { builder->Build(oldMol, newMol, molIndex); }
+	MoleculeKind();
+	~MoleculeKind();
 
-   SortedNonbond sortedNB;
-   SortedNonbond_1_4 sortedNB_1_4;
-   //these are used for total energy calculations, see Geometry.h/cpp
-   Nonbond nonBonded;
-   Nonbond *nonBonded_1_4;
-   BondList bondList;
-   GeomFeature angles;
-   GeomFeature dihedrals;
+	uint NumAtoms() const {
+		return numAtoms;
+	}
+	uint NumBonds() const {
+		return bondList.count;
+	}
+	uint NumAngles() const {
+		return angles.Count();
+	}
+	uint NumDihs() const {
+		return dihedrals.Count();
+	}
+	uint AtomKind(const uint a) const {
+		return atomKind[a];
+	}
 
-   std::string name;
-   std::vector<std::string> atomNames;
-   double molMass;
-   
-   double * atomMass;
-   double * atomCharge;
-   
+	//Initialize this kind
+	//Exits program if param and psf files don't match
+	void Init(std::string const& l_name, Setup const& setup,
+			Forcefield const& forcefield, System & sys);
+
+	//Invoke CBMC, oldMol and newMol will be modified
+	void Build(cbmc::TrialMol& oldMol, cbmc::TrialMol& newMol,
+			const uint molIndex) {
+		builder->Build(oldMol, newMol, molIndex);
+	}
+
+	SortedNonbond sortedNB;
+	SortedEwaldNonbond sortedEwaldNB;
+	SortedNonbond_1_4 sortedNB_1_4;
+	//these are used for total energy calculations, see Geometry.h/cpp
+	Nonbond nonBonded;
+	Nonbond *nonBonded_1_4;
+	EwaldNonbond EwaldNonbonded;
+	BondList bondList;
+	GeomFeature angles;
+	GeomFeature dihedrals;
+
+	std::string name;
+	std::vector<std::string> atomNames;
+	double molMass;
+
+	double * atomMass;
+	double * atomCharge;
 
 #if ENSEMBLE == GCMC
-   double chemPot;
+	double chemPot;
 #endif
 
 // private:
-   
-   void InitAtoms(mol_setup::MolKind const& molData);
-    
-   //uses buildBonds to check if molecule is branched
-   //bool CheckBranches();
-   void InitCBMC(System& sys, Forcefield& ff,
-		 Setup& set);
-   
-   cbmc::CBMC* builder;
-   
-   uint numAtoms;
-   uint * atomKind;
+
+	void InitAtoms(mol_setup::MolKind const& molData);
+
+	//uses buildBonds to check if molecule is branched
+	//bool CheckBranches();
+	void InitCBMC(System& sys, Forcefield& ff, Setup& set);
+
+	cbmc::CBMC* builder;
+
+	uint numAtoms;
+	uint * atomKind;
 };
-
-
-
-
 
 #endif /*FF_MOLECULE_H*/

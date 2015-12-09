@@ -1,3 +1,2 @@
-
 #define GOMC_VERSION_MAJOR 0
 #define GOMC_VERSION_MINOR 1

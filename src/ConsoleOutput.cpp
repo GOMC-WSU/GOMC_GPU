@@ -1,24 +1,19 @@
 #include "ConsoleOutput.h"          //For spec;
 #include "EnsemblePreprocessor.h"   //For BOX_TOTAL, ensemble
-#include "MoveConst.h"             //For move index constants, name constants.
+#include "MoveConst.h"    //For move index constants, name constants.
 #include "FFConst.h"                //For density conv.
 #include "System.h"                 //for init
 #include "StaticVals.h"             //for init  
-#include "MoleculeLookup.h"  //for lookup array (to get density, kind cnts, etc.
-#include "MoveSettings.h"           //For move settings/state
 #include "MoleculeKind.h"           //For kind names
 #include "PDBConst.h"               //For resname len.
 #include "OutputVars.h"
 
 #include <iostream>                 // for cout;
 
-
-
+#define EN_SUBCAT_OUT
 
 void ConsoleOutput::DoOutput(const ulong step)
 {
-
-
    if (step==0)
       std::cout << "STARTING SIMULATION!!" << std::endl << std::endl;
    else 
@@ -27,20 +22,13 @@ void ConsoleOutput::DoOutput(const ulong step)
 		<< "% done)" << std::endl << std::endl;
 
    for (uint b = 0; b < BOX_TOTAL; b++)
-
-
       PrintBox(b, step);
 
    PrintSysStat();
-
-
 }
-
-
 
 void ConsoleOutput::PrintBox(const uint box, const ulong step) const
 {
-
    std::cout << std::endl;
    std::string banner = "BOX ";
    uint offset = box * var->numKinds;
@@ -49,29 +37,29 @@ void ConsoleOutput::PrintBox(const uint box, const ulong step) const
    
    std::cout << "Volume: " << var->volumeRef[box] << " A^3" << std::endl
 	     << "Tot # mol: " << var->numByBox[box] << std::endl << std::endl;
-
    
    for(uint k = 0; k < var->numKinds; ++k)
-
-
       PrintMolKind(k, k+offset);
 
+   PrintEnergy(var->energyRef[box], var->virialRef[box]
+               ,(box < BOXES_WITH_U_NB));
 
-   PrintEnergy(var->energyRef[box], var->virialRef[box],
-               (box < BOXES_WITH_U_NB));
-    if (step > 0 )
-   PrintMoveStat(box, step);
+   if (step > 0 )
+   {
+      PrintMoveStat(box, step);
+   }
 }
 
 void ConsoleOutput::PrintSysStat() const
 {
    PrintBanner("SYSTEM");
-
    PrintEnergy(*(var->energyTotRef), *(var->virialTotRef));
 }
 
-void ConsoleOutput::PrintMoveKind(bool & somethingPrinted, const uint m,
-				  const uint b, const ulong step) const
+void ConsoleOutput::PrintMoveKind(bool & somethingPrinted,
+				  const uint m,
+				  const uint b,
+				  const ulong step) const
 {      
    uint sub = mv::GetMoveSubIndex(m, b);
    if (var->movePercRef[m] == 0.0 && step==0)
@@ -84,14 +72,7 @@ void ConsoleOutput::PrintMoveKind(bool & somethingPrinted, const uint m,
    {
       somethingPrinted |= true;
       std::cout << mv::MOVE_NAME[sub] << " -- tries: " << var->GetTries(sub)
-
-
-
 		<< "; # Accept: " << var->GetAccepted(sub)
-
-
-
-
 		<< "; % Accept : " << var->GetAcceptPercent(sub);
       if (sub < mv::SCALEABLE)
 	 std::cout << "; Max Amt.: " << var->GetScale(sub);
@@ -124,45 +105,40 @@ void ConsoleOutput::PrintMoveStat(const uint box, const ulong step) const
 }
 
 void ConsoleOutput::PrintMolKind(const uint k, const uint kb) const
-
-
-
-
 {
    std::cout << "Molecule Type " << var->resKindNames[k] << std::endl
-
-
 	     << "-------------------" << std::endl
 	     << "Number: " << var->numByKindBox[kb] << " ;" << std::endl;
-
    if (k > 1)
       std::cout <<  "Mol. Fraction: " << var->molFractionByKindBox[kb]
                 << " ;" << std::endl;
    std::cout << "Density: "  << var->densityByKindBox[kb] 
-
-
 	     << " g/ml" << std::endl << std::endl;
-
 }
 
 void ConsoleOutput::PrintEnergy(Energy const& en, Virial const& vir,
                                 const bool intraOnly) const
 {
-  if (intraOnly)
+   if (intraOnly)
       std::cout << "Energy (in K): total: " << en.total << std::endl
 #ifdef EN_SUBCAT_OUT
 		<< "intra (bonded): " << en.intraBond << std::endl 
+	        << "inter: " << en.inter << " ; inter (tail corr.): " << en.tc
 #endif
-                << std::endl;
+                << "; elect: " << en.elect  <<"; real: " << en.real
+		<< "; recip: " << en.recip  << "; self: " << en.self
+		<< "; correction: " << en.correction << std::endl;
    else
       std::cout << "Energy (in K): total: " << en.total << std::endl
 #ifdef EN_SUBCAT_OUT
                 << "inter: " << en.inter << " ; inter (tail corr.): " 
                 << en.tc << std::endl << "intra (bonded): "
-                << en.intraBond << " ; intra (nonbonded): " << en.intraNonbond << std::endl
+                << en.intraBond << " ; intra (nonbonded): " << en.intraNonbond 
+				 << std::endl
 #endif
-
-		<< std::endl;
+		 << "; elect: " << en.elect  <<"; real: " << en.real
+		<< "; recip: " << en.recip  << "; self: " << en.self
+		<< "; correction: " << en.correction  << std::endl;
 }
 
 void ConsoleOutput::PrintBanner(std::string const& str) const 

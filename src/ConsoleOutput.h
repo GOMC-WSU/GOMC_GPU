@@ -19,7 +19,6 @@ class MoveSettings;
 class MoleculeLookup;
 
 /*
-
 struct CurrentAverages
 {
 
@@ -69,7 +68,6 @@ struct ConsoleOutput : OutputableBase
  public:
    ConsoleOutput(OutputVars & v){ this->var = &v; }
 
-
    //Console Output does not need to sample, so does nothing.
    virtual void Sample(const ulong step) {}
    
@@ -87,8 +85,6 @@ struct ConsoleOutput : OutputableBase
 
    void PrintBox(const uint box, const ulong step) const;
 
-
-
    void PrintSysStat() const;
 
    void PrintBanner(std::string const& str) const; 
@@ -100,13 +96,8 @@ struct ConsoleOutput : OutputableBase
 
    void PrintMolKind(const uint k, const uint kb) const;
 
-
-
    void PrintEnergy(Energy const& en, Virial const& vir,
                     const bool intraOnly = false) const;
-
-
-   
 };
 
 #endif /*CONSOLE_OUTPUT_H*/

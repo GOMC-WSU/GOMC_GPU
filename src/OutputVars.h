@@ -11,48 +11,46 @@ class System;
 class MoveSettings;
 class MoleculeLookup;
 
-struct OutputVars
-{
-   OutputVars(System & sys, StaticVals const& statV);
+struct OutputVars {
+	OutputVars(System & sys, StaticVals const& statV);
 
-   ~OutputVars(void);
+	~OutputVars(void);
 
-   void Init(pdb_setup::Atoms const& atoms);
-   void InitRef(System & sys, StaticVals const& statV);
+	void Init(pdb_setup::Atoms const& atoms);
+	void InitRef(System & sys, StaticVals const& statV);
 
-   void CalcAndConvert(void);
-   uint GetTries(uint sub);
-   uint GetAccepted(uint sub);
-   double GetAcceptPercent(uint sub);
-   double GetScale(uint sub);
-   
-   //Intermediate vars.
-   uint * numByBox, * numByKindBox;
-   double * molFractionByKindBox, * densityByKindBox,
-      pressure[BOXES_WITH_U_NB];
-   
-   uint numKinds;
-   //Constants
-   double T_in_K;
+	void CalcAndConvert(void);
+	uint GetTries(uint sub);
+	uint GetAccepted(uint sub);
+	double GetAcceptPercent(uint sub);
+	double GetScale(uint sub);
 
-   //References
-   double * volumeRef;
-   XYZArray * axisRef;
-   double * volInvRef;
-   Energy * energyRef, * energyTotRef;
-   Virial * virialRef, * virial,  * virialTotRef;
-   MoleculeKind * kindsRef;
-   MoleculeLookup * molLookupRef;
-   
-   //Local copy of res names.
-   std::vector<std::string> resKindNames;
-   double const* movePercRef;
-   MoveSettings * moveSetRef;
+	//Intermediate vars.
+	uint * numByBox, *numByKindBox;
+	double * molFractionByKindBox, *densityByKindBox, pressure[BOXES_WITH_U_NB];
+
+	uint numKinds;
+	//Constants
+	double T_in_K;
+
+	//References
+	double * volumeRef;
+	XYZArray * axisRef;
+	double * volInvRef;
+	Energy * energyRef, *energyTotRef;
+	Virial * virialRef, *virial, *virialTotRef;
+	MoleculeKind * kindsRef;
+	MoleculeLookup * molLookupRef;
+
+	//Local copy of res names.
+	std::vector<std::string> resKindNames;
+	double const* movePercRef;
+	MoveSettings * moveSetRef;
 
 #if ENSEMBLE == GCMC
-   double * chemPot;
+	double * chemPot;
 #elif ENSEMBLE == GEMC
-   double heatOfVap;
+	double heatOfVap;
 #endif
 };
 

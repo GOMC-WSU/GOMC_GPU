@@ -1,7 +1,5 @@
-
 #include "Simulation.h"
-#include "GOMC_Config.h"    //For version number
-#include <iostream>
+#include "GOMC_Config.h"    //For version number#include <iostream>
 #include <ctime>
 
 //find and include appropriate files for getHostname
@@ -16,13 +14,12 @@
 #define GOMCMajor 1
 #define GOMCMinor 0
 
-namespace{
+//namespace {
 
-	void PrintSimulationHeader();
-	void PrintSimulationFooter();
-}
-void PrintTime(char * sTime)
-{
+//void PrintSimulationHeader();
+//void PrintSimulationFooter();
+//}
+void PrintTime(char * sTime) {
 
 	// current date/time based on current system
 	time_t now = time(0);
@@ -30,23 +27,21 @@ void PrintTime(char * sTime)
 	// convert now to string form
 	char* dt = ctime(&now);
 
-	cout<<"\n    ============================= GOMC "<<GOMCMajor<<"."<<GOMCMinor<<" =============================\n\n";
-	cout << "         Simulation "<<sTime<< " date and time is: " << dt<<endl ;
-	cout<<"    ====================================================================\n\n";
-
+	cout << "\n    ============================= GOMC " << GOMCMajor << "."
+			<< GOMCMinor << " =============================\n\n";
+	cout << "         Simulation " << sTime << " date and time is: " << dt
+			<< endl;
+	cout
+			<< "    ====================================================================\n\n";
 
 }
-int main(void)
-{   PrintTime("start");
-const char * nm = "in.dat";
+int main(void) {
+	PrintTime("start");
+	const char * nm = "in.dat";
 
-Simulation sim(nm);
-sim.RunSimulation();
-PrintTime("end");
-return 0;
+	Simulation sim(nm);
+	sim.RunSimulation();
+	PrintTime("end");
+	return 0;
 }
-
-
-
-
 
