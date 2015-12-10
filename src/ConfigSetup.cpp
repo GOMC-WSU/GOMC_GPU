@@ -613,30 +613,40 @@ void ConfigSetup::verifyInputs(void)
 		std::cout << "Error: Molecule swap frequency has not been specified!" << std::endl;
 		exit(0);
 	}
-	
-
-	//if(fabs((sys.moves.displace + sys.moves.rotate + sys.moves.transfer + sys.moves.volume)-1.0f) > 1.0e-4)
-	//{
-	//	std::cout << "Error: Sum of move frequncies are not equal to one!" << std::endl;
-	//	exit(0);
-	//}
+	if(abs(sys.moves.displace + sys.moves.rotate + sys.moves.transfer + sys.moves.volume - 1.0) > 0.001)
+	{
+		std::cout << "Error: Sum of move frequncies are not equal to one!" << std::endl;
+		exit(0);
+	}
+	else if(abs(sys.moves.displace + sys.moves.rotate + sys.moves.transfer + sys.moves.volume - 1.0) > 0.0001)
+	{
+		std::cout << "Warning: Please double check your move percentage frequency to add up to 1!" << std::endl;
+	}
 #elif ENSEMBLE == GCMC
 	if(sys.moves.transfer == DBL_MAX)
 	{
 		std::cout << "Error: Molecule swap frequency has not been specified!" << std::endl;
 		exit(0);
 	}
-	//if(fabs((sys.moves.displace + sys.moves.rotate + sys.moves.transfer )-1.0f) > 1.0e-4)
-	//{
-	//	std::cout << "Error: Sum of move frequncies are not equal to one!" << std::endl;
-	//	exit(0);
-	//}
+	if(abs(sys.moves.displace + sys.moves.rotate + sys.moves.transfer - 1.0) > 0.001)
+	{
+		std::cout << "Error: Sum of move frequncies are not equal to one!" << std::endl;
+		exit(0);
+	}
+	else if(abs(sys.moves.displace + sys.moves.rotate + sys.moves.transfer - 1.0) > 0.0001)
+	{
+		std::cout << "Warning: Please double check your move percentage frequency to add up to 1!" << std::endl;
+	}
 #else
-	//if(fabs((sys.moves.displace + sys.moves.rotate )-1.0f) > 1.0e-4)
-	//{
-	//	std::cout << "Error: Sum of move frequncies are not equal to one!" << std::endl;
-	//	exit(0);
-	//}
+	if(abs(sys.moves.displace + sys.moves.rotate- 1.0) > 0.001)
+	{
+		std::cout << "Error: Sum of move frequncies are not equal to one!" << std::endl;
+		exit(0);
+	}
+	else if(abs(sys.moves.displace + sys.moves.rotate- 1.0) > 0.0001)
+	{
+		std::cout << "Warning: Please double check your move percentage frequency to add up to 1!" << std::endl;
+	}
 #endif
 
 	for(i = 0 ; i < BOX_TOTAL ; i++)
