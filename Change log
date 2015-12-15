@@ -1,6 +1,12 @@
 # Change Log
 All notable changes to this project will be documented in this file.
 
+##[1.0] Ewald branch - 12/14/2015
++ Interation implementation (brute force) of NVT calculation on GPU is created and tested; however, there is still space to get the performance imporved.
+? The cell-list implementation is still in trouble with water molecule test case because there are more than max number of molecules allowed in one cell.
+
+###############################################################################
+
 ## [1.0] - 10/18/2015
 + Changes for input file system.
 + Added Cell list optimization to the GPU and the Serial code.
