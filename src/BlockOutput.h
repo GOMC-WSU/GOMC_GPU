@@ -23,24 +23,12 @@ struct BlockAverage
 {
    BlockAverage(): enable(false), block(NULL), uintSrc(NULL), dblSrc(NULL) {}
    
-   ~BlockAverage() 
-   { 
-      if (outF.is_open())
-      {
-	 outF.close();
-      }
-      if (dblSrc != NULL)
-      {
-	 delete[] dblSrc;
-      }
-      if (uintSrc != NULL)
-      {
-	 delete[] uintSrc;
-      }
-      if (block != NULL)
-      {
-	 delete[] block;
-      }
+	~BlockAverage() 
+	{ 
+		if (outF.is_open()) { outF.close(); }
+		if (dblSrc != NULL) { delete[] dblSrc; }
+		if (uintSrc != NULL) { delete[] uintSrc; }
+		if (block != NULL) { delete[] block; }
    }
 
    //Initializes name, and enable
@@ -92,9 +80,7 @@ struct BlockAverage
 
 struct BlockAverages : OutputableBase
 {
-   BlockAverages(OutputVars & v){ this->var = &v; }
-   
-   ~BlockAverages(void) { if ( blocks != NULL ) delete[] blocks; }
+   BlockAverages(OutputVars & v){ this->var = &v; blocks = NULL; }
    
    //No additional init.
    virtual void Init(pdb_setup::Atoms const& atoms,

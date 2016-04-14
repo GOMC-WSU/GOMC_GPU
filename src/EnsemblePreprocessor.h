@@ -8,7 +8,7 @@
 
 #ifndef ENSEMBLE
 //The choice of ensemble.
-#define ENSEMBLE NVT
+#define ENSEMBLE GEMC
 #endif
 
 //Ensemble specific defines, such as what data members are variable
@@ -26,8 +26,8 @@
 #define VARIABLE_DENSITY
 #define BOX_TOTAL 2
 #elif ENSEMBLE == NVT
+#define VARIABLE_PARTICLE_NUMBER
 #define BOX_TOTAL 1
 #endif
 
 #endif /*ENSEMBLE_PREPROCESSOR_H*/
-

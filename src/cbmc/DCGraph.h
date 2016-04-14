@@ -1,11 +1,9 @@
 /*******************************************************************************
-GPU OPTIMIZED MONTE CARLO (GOMC) 1.0 (GPU version)
+GPU OPTIMIZED MONTE CARLO (GOMC) 1.0 (Serial version)
 Copyright (C) 2015  GOMC Group
-
 A copy of the GNU General Public License can be found in the COPYRIGHT.txt
 along with this program, also can be found at <http://www.gnu.org/licenses/>.
 ********************************************************************************/
-
 #ifndef DCGRAPH_H
 #define DCGRAPH_H
 #include "../CBMC.h"
@@ -19,7 +17,8 @@ along with this program, also can be found at <http://www.gnu.org/licenses/>.
 * traversing a spanning tree of the graph.
 */
 
-namespace cbmc {
+namespace cbmc
+{
 
    class DCComponent;
 
@@ -33,12 +32,14 @@ namespace cbmc {
       ~DCGraph();
 
    private:
-      struct Edge {
+      struct Edge
+      {
          uint destination;
          DCComponent* component;
          Edge(uint d, DCComponent* c) : destination(d), component(c) {}
       };
-      struct Node {
+      struct Node
+      {
          DCComponent* starting;
          std::vector<Edge> edges;
       };
@@ -52,4 +53,3 @@ namespace cbmc {
 
 
 #endif
-

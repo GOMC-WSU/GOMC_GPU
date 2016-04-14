@@ -1,5 +1,6 @@
 #include "Simulation.h"
-#include "GOMC_Config.h"    //For version number#include <iostream>
+#include "GOMC_Config.h"    //For version number
+#include <iostream>
 #include <ctime>
 
 //find and include appropriate files for getHostname
@@ -11,37 +12,125 @@
 #define HOSTNAME
 #endif
 
-#define GOMCMajor 1
-#define GOMCMinor 0
-
-//namespace {
-
-//void PrintSimulationHeader();
-//void PrintSimulationFooter();
-//}
-void PrintTime(char * sTime) {
-
-	// current date/time based on current system
-	time_t now = time(0);
-
-	// convert now to string form
-	char* dt = ctime(&now);
-
-	cout << "\n    ============================= GOMC " << GOMCMajor << "."
-			<< GOMCMinor << " =============================\n\n";
-	cout << "         Simulation " << sTime << " date and time is: " << dt
-			<< endl;
-	cout
-			<< "    ====================================================================\n\n";
-
+namespace{
+    std::ostream& PrintTime(std::ostream& stream);
+    std::ostream& PrintHostname(std::ostream& stream);
+    std::ostream& PrintVersion(std::ostream& stream);
+    void PrintSimulationHeader();
+    void PrintSimulationFooter();
+    void PrintDebugMode();
+    bool CheckAndPrintEnsemble();
 }
-int main(void) {
-	PrintTime("start");
-	const char * nm = "in.dat";
 
-	Simulation sim(nm);
-	sim.RunSimulation();
-	PrintTime("end");
-	return 0;
+int main(void)
+{
+   const char * nm = "in.dat";
+   PrintSimulationHeader();
+   //Only run if valid ensemble was detected.
+   if (CheckAndPrintEnsemble())
+   {   
+#ifndef NDEBUG
+      PrintDebugMode();
+#endif
+      Simulation sim(nm);
+      sim.RunSimulation();
+      PrintSimulationFooter();
+   }
+   return 0;
+}
+
+
+namespace {
+
+   void PrintSimulationHeader()
+   {
+      std::cout << PrintVersion << '\n'
+		<< "Started at: " << PrintTime
+#ifdef HOSTNAME
+		<< "On hostname: " << PrintHostname
+#endif
+		<< "\n\n";
+   }
+
+   bool CheckAndPrintEnsemble()
+   {
+      bool healthy = true;
+      std::cout << "------------------------------------------------------"
+		<< std::endl
+		<< "This code was compiled to support the ";
+#if ENSEMBLE == NVT
+      std::cout << "canonical (NVT)";
+#elif ENSEMBLE == GEMC
+      std::cout << "Gibbs";
+#elif ENSEMBLE == GCMC
+      std::cout << "grand canonical";
+#else
+      std::cerr << "CRITICAL ERROR! Preprocessor value ENSEMBLE is "
+		<< "invalid or undefined." << std::endl
+		<< "Code will exit.";
+      healthy = false;
+#endif
+      std::cout << " ensemble." << std::endl
+		<< "------------------------------------------------------"
+		<< std::endl << std::endl;
+      return healthy;
+   }
+
+void PrintDebugMode()
+{
+  std::cout << "#########################################################\n";
+  std::cout << "################# RUNNING IN DEBUG MODE #################\n";
+  std::cout << "#########################################################\n";
+}
+
+void PrintSimulationFooter()
+{
+    std::cout << PrintVersion << '\n'
+        << "Completed at: " << PrintTime
+        << "On hostname: " << PrintHostname
+        << '\n';
+}
+
+std::ostream& PrintVersion(std::ostream& stream)
+{
+    stream << "GOMC Serial Version " << GOMC_VERSION_MAJOR 
+        << '.' << GOMC_VERSION_MINOR;
+    return stream;
+}
+
+std::ostream& PrintTime(std::ostream& stream)
+{
+    time_t timer;
+    time(&timer);
+    stream << asctime(localtime(&timer));
+    return stream;
+}
+
+std::ostream& PrintHostname(std::ostream& stream)
+{
+#ifdef HOSTNAME
+#ifdef _WIN32
+    //setup WINSOCK
+    WSADATA wsaData;
+    WSAStartup(MAKEWORD(2,0), &wsaData);
+#endif
+
+    const int maxNameLength = 80;
+    char hostname[maxNameLength];
+    gethostname(hostname, maxNameLength);
+    //gethostname does not guarantee null termination
+    hostname[maxNameLength - 1] = '\0';
+    stream << hostname;
+
+#ifdef _WIN32
+    //teardown WINSOCK
+    WSACleanup();
+#endif
+#else
+    stream << "Hostname Unavailable";
+#endif
+    return stream;
+}
+
 }
 

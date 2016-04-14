@@ -1,4 +1,3 @@
-
 #include "BoxDimensions.h"
 #include "MoveConst.h" //For cutoff-related fail condition
 
@@ -11,7 +10,7 @@ void BoxDimensions::Init(config_setup::RestartSettings const& restart,
    rCut = rc;
    rCutSq = rcSq;
    minBoxSize = rc * rcSq * 8 + TENTH_ANGSTROM;
-    std::cout << "Min. Box Size: " << minBoxSize << std::endl;
+   std::cout << "Min. Box Size: " << minBoxSize << std::endl;
    if (restart.enable && cryst.hasVolume)
       axis = cryst.axis;
    else if (confVolume.hasVolume)
@@ -57,7 +56,6 @@ uint BoxDimensions::ShiftVolume
 
 uint BoxDimensions::ExchangeVolume
 (BoxDimensions & newDim, double * scale, const double transfer) const
-
 {
    uint state = mv::fail_state::NO_FAIL;
    //double vRat = volume[bO]*volInv[bN];
@@ -70,8 +68,6 @@ uint BoxDimensions::ExchangeVolume
    newDim.SetVolume(1, vTot - newDim.volume[0]);
    //If move would shrink any box axis to be less than 2 * rcut, then
    //automatically reject to prevent errors.
-
-
    for (uint b = 0; b < BOX_TOTAL && state == mv::fail_state::NO_FAIL; b++)
    {
 	 scale[b] = newDim.axis.Get(b).x / axis.Get(b).x;
@@ -82,6 +78,3 @@ uint BoxDimensions::ExchangeVolume
    }
    return state;
 }
-
-
-

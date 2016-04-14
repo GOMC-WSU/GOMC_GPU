@@ -1,4 +1,3 @@
-
 #ifndef BOX_DIMENSIONS_H
 #define BOX_DIMENSIONS_H
 
@@ -30,14 +29,14 @@ struct BoxDimensions
 	     pdb_setup::Cryst1 const& cryst, double rc, double rcSq);
 
    XYZ GetAxis(const uint b) const { return axis.Get(b); }
-   
 
    double GetTotVolume() const;
 
-   void SetVolume(const uint b, const double vol); //
-
-   uint ShiftVolume(BoxDimensions & newDim, double & scale, const uint b, const double delta) const;
+   void SetVolume(const uint b, const double vol);      
    
+   uint ShiftVolume(BoxDimensions & newDim, double & scale, 
+		    const uint b, const double delta) const;
+
    //!Calculate and execute volume exchange based on transfer
    /*!\param newDim return reference for new dimensions
     * \param scaleO return reference for linear scale factor of box bO
@@ -47,7 +46,6 @@ struct BoxDimensions
     * \param transfer determines amount to be transfered
     */
    uint ExchangeVolume(BoxDimensions & newDim, double * scale, 
-
 		       const double transfer) const;
 
    //Vector btwn two points, accounting for PBC, on an individual axis
@@ -111,16 +109,14 @@ struct BoxDimensions
                const uint b) const;
 
    bool InRcut(double distSq) const { return (distSq < rCutSq); }
-   //v1
+
    //Dist squared , two different coordinate arrays
    void GetDistSq(double & distSq, XYZArray const& arr1,
                const uint i, XYZArray const& arr2, const uint j,
                const uint b) const;
-   //v1
    //Dist squared with same coordinate array
    void GetDistSq(double & distSq, XYZArray const& arr, const uint i,
 		  const uint j, const uint b) const;
-
 
    
    XYZArray axis;     //x, y, z dimensions of each box (a)
@@ -140,6 +136,9 @@ struct BoxDimensions
 
    double UnwrapPBC(double& v, const double ref,
 		    const double ax, const double halfAx) const;
+
+   double DotProduct(const uint atom, double kx, double ky,
+		     double kz, const XYZArray & Coords, uint box) const; 
 };
 
 inline BoxDimensions::BoxDimensions(BoxDimensions const& other) : 
@@ -177,9 +176,10 @@ inline double BoxDimensions::GetTotVolume() const
    return sum;
 }
 
+
 inline void BoxDimensions::SetVolume(const uint b, const double vol)
 {
-	 double newAxX_b = pow(vol, (1.0/3.0));
+   double newAxX_b = pow(vol, (1.0/3.0));
    XYZ newAx_b(newAxX_b, newAxX_b, newAxX_b);
    volume[b] = vol;
    volInv[b] = 1.0/vol;
@@ -354,9 +354,10 @@ inline bool BoxDimensions::InRcut
    distSq = dist.x*dist.x + dist.y*dist.y + dist.z*dist.z;
    return (rCutSq > distSq);
 }
+
+
 #endif
 
-//v1
 inline void BoxDimensions::GetDistSq(double & distSq, XYZArray const& arr1,
                const uint i, XYZArray const& arr2, const uint j,
                const uint b) const
@@ -364,7 +365,7 @@ inline void BoxDimensions::GetDistSq(double & distSq, XYZArray const& arr1,
    XYZ dist = MinImage(arr1.Difference(i, arr2, j), b);
    distSq = dist.x*dist.x + dist.y*dist.y + dist.z*dist.z;
 }
-//v1
+
 inline void BoxDimensions::GetDistSq
 (double & distSq, XYZArray const& arr, const uint i, const uint j,
  const uint b) const
@@ -372,9 +373,6 @@ inline void BoxDimensions::GetDistSq
    XYZ dist = MinImage(arr.Difference(i, j), b);
    distSq = dist.x*dist.x + dist.y*dist.y + dist.z*dist.z;
 }
-
-
-
 
 //Wrap one coordinate.
 inline XYZ BoxDimensions::WrapPBC(XYZ rawPos, const uint b) const
@@ -448,7 +446,7 @@ inline double BoxDimensions::WrapPBC(double& v, const double ax) const
    //Note: testing shows that it's most efficient to negate if true.
    //Source:
    // http://jacksondunstan.com/articles/2052
-   if ( v >= ax ) //if +, wrap out to low end// v1
+   if ( v >= ax ) //if +, wrap out to low end, on boundry will wrap to zero
       v -= ax;
    else if ( v < 0 ) //if -, wrap to high end
       v += ax;
@@ -492,5 +490,13 @@ inline double BoxDimensions::UnwrapPBC
 #endif
 }
 
-#endif /*BOX_DIMENSIONS_H*/
+//Calculate dot product
+inline double BoxDimensions::DotProduct(const uint atom, double kx,
+					double ky, double kz,
+					const XYZArray &Coords, uint box) const
+{
+   double x = Coords.x[atom], y = Coords.y[atom], z = Coords.z[atom];
+   return(x * kx + y * ky + z * kz);
+}
 
+#endif /*BOX_DIMENSIONS_H*/

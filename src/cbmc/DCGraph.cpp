@@ -1,11 +1,3 @@
-/*******************************************************************************
-GPU OPTIMIZED MONTE CARLO (GOMC) 1.0 (GPU version)
-Copyright (C) 2015  GOMC Group
-
-A copy of the GNU General Public License can be found in the COPYRIGHT.txt
-along with this program, also can be found at <http://www.gnu.org/licenses/>.
-********************************************************************************/
-
 #include "DCGraph.h"
 #include "DCFreeHedron.h"
 #include "DCLinkedHedron.h"
@@ -18,14 +10,14 @@ along with this program, also can be found at <http://www.gnu.org/licenses/>.
 namespace cbmc {
    DCGraph::DCGraph(System& sys, const Forcefield& ff,
 		    const MoleculeKind& kind, const Setup& set)
-			 : data(sys, ff, set)
+      : data(sys, ff, set)
    {
       using namespace mol_setup;
       MolMap::const_iterator it = set.mol.kindMap.find(kind.name);
       assert(it != set.mol.kindMap.end());
       const MolKind setupKind = it->second;
 
-       std::vector<uint> atomToNode(setupKind.atoms.size(), 0);
+      std::vector<uint> atomToNode(setupKind.atoms.size(), 0);
       std::vector<uint> bondCount(setupKind.atoms.size(), 0);
       for (uint b = 0; b < setupKind.bonds.size(); ++b) {
          const Bond& bond = setupKind.bonds[b];
@@ -40,9 +32,8 @@ namespace cbmc {
             atomToNode[atom] = nodes.size();
             nodes.push_back(Node());
             Node& node = nodes.back();
-             node.starting = new DCFreeHedron(&data, setupKind, atom,
+            node.starting = new DCFreeHedron(&data, setupKind, atom,
 					     bonds[0].a1);
-
             for (uint i = 0; i < bonds.size(); ++i) {
                uint partner = bonds[i].a1;
                if(bondCount[partner] == 1) {
@@ -70,25 +61,18 @@ namespace cbmc {
       visited[current] = true;
       fringe = nodes[current].edges;
       DCComponent* comp = nodes[current].starting;
-      comp->PrepareNew();
-
-
-
+      comp->PrepareNew(newMol, molIndex);
       comp->BuildNew(newMol, molIndex);
-
-
-
-
-
-      comp->PrepareOld();
+      comp->PrepareOld(oldMol, molIndex);
       comp->BuildOld(oldMol, molIndex);
       //Advance along edges, building as we go
-      while (!fringe.empty()) {
+      while (!fringe.empty()) 
+      {
          uint pick = data.prng.randIntExc(fringe.size());
          comp = fringe[pick].component;
-         comp->PrepareNew();
+         comp->PrepareNew(newMol, molIndex);
          comp->BuildNew(newMol, molIndex);
-         comp->PrepareOld();
+         comp->PrepareOld(oldMol, molIndex);
          comp->BuildOld(oldMol, molIndex);
 
          //travel to new node, remove traversed edge
@@ -97,9 +81,11 @@ namespace cbmc {
          fringe.pop_back();
          visited[current] = true;
          //add edges to unvisited nodes
-         for(uint i = 0; i < nodes[current].edges.size(); ++i) {
+         for(uint i = 0; i < nodes[current].edges.size(); ++i) 
+	 {
             Edge& e = nodes[current].edges[i];
-            if(!visited[e.destination]) {
+            if(!visited[e.destination]) 
+	    {
                fringe.push_back(e);
             }
          }
@@ -117,4 +103,3 @@ namespace cbmc {
    }
 
 }
-
