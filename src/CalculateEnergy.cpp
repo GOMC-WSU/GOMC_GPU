@@ -116,7 +116,7 @@ SystemPotential CalculateEnergy::SystemInter
 
    if (ewald)
    {
-	   calcEwald->InitGPU();
+//	   calcEwald->InitGPU();
 	   for (uint b = 0; b < BOXES_WITH_U_NB; ++b)
 	   {
 		   potential.boxEnergy[b].recip = calcEwald->BoxReciprocal(b, coords);

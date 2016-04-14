@@ -6,6 +6,7 @@
 #include <vector>
 #include <cuda.h>
 #include <cuda_runtime.h>
+#include "TransformMatrix.h"
 
 //
 //    Ewald.h
@@ -69,7 +70,7 @@ class Ewald
 			const uint box, XYZ const*const newCOM = NULL) ;	
 
    double MolReciprocal(const uint pStart, const uint pLen, const uint m,
-		   const uint b, const XYZ shift);
+		   const uint b, const XYZ shiftOrCenter, const int moveType, RotationMatrix matrix);
 
    //calculate self term for CBMC algorithm
    void SwapSelf(double *self, uint molIndex, uint partIndex, int box, 
@@ -140,6 +141,7 @@ class Ewald
    cudaStream_t streams[BOX_TOTAL];
    double blockRecipEnergy[2];
    double *gpu_newMolPos, *gpu_oldMolPos;
+   double *gpu_blockRecipNew, *gpu_rotateMatrix;
 
    private: 
    
@@ -184,16 +186,29 @@ __global__ void BoxReciprocalGPU(
 		double *gpu_prefact, const uint box, const uint imageOffset,
 		double *gpu_blockRecipEnergy, const uint imageSize);
 
-__global__ void MolReciprocalGPU(
+__global__ void MolReciprocalDisplaceGPU(
 		const uint pStart, const uint pLen, const uint molIndex,
 		const XYZ shift, double *gpu_xCoords, double *gpu_yCoords,
 		double *gpu_zCoords, double *gpu_atomCharge, double *gpu_imageReal,
 		double *gpu_imageImaginary, double *gpu_imageRealRef,
 		double *gpu_imageImaginaryRef, double *gpu_kx, double *gpu_ky,
 		double *gpu_kz, double *gpu_newMolPos, double *gpu_prefact,
-		const uint box, const uint imageOffset, double* gpu_blockRecipNew,
+		const uint box, const uint imageOffset, const uint gridOffset,
+		double* gpu_blockRecipNew,
 		const uint imageSize, const double xAxis, const double yAxis,
 		const double zAxis, const int maxMolLen);
+
+__global__ void MolReciprocalRotateGPU(
+		const uint pStart, const uint pLen, const uint molIndex,
+		const XYZ center, double *gpu_xCoords, double *gpu_yCoords,
+		double *gpu_zCoords, double *gpu_atomCharge, double *gpu_imageReal,
+		double *gpu_imageImaginary, double *gpu_imageRealRef,
+		double *gpu_imageImaginaryRef, double *gpu_kx, double *gpu_ky,
+		double *gpu_kz, double *gpu_newMolPos, double *gpu_prefact,
+		const uint box, const uint imageOffset, const uint gridOffset,
+		double* gpu_blockRecipNew,
+		const uint imageSize, const double xAxis, const double yAxis,
+		const double zAxis, const int maxMolLen, double *matrix);
 
 __global__ void AcceptUpdateGPU(
 		const uint pStart, const uint pLen, const uint molIndex,

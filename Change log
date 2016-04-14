@@ -7,6 +7,9 @@ All notable changes to this project will be documented in this file.
 
 ###############################################################################
 
+## [1.7] - 04/14/2016
+- Remove cudaMalloc and cudaFree from iteration and put them into class. Therefore, API calls will not be run in every step, which is very expensive. Performance is 3X than before.
+
 ## [1.7] - 04/13/2016
 + previous cell list GPU implementation is abondoned. The new GPU implementation runs only Reciprocal energy calculations on GPU.
 + Initialization of reciprocal on GPU is done.

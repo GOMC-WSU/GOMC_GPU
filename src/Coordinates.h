@@ -8,6 +8,7 @@
 #include "MoleculeLookup.h" //For box iterators used in initial assignment
 #include "COM.h"
 #include "PRNG.h"
+#include "TransformMatrix.h"
 
 //Coordinates array 
 class Coordinates : public XYZArray
@@ -45,6 +46,8 @@ class Coordinates : public XYZArray
 			BoxDimensions const& newDim, const uint b, 
 			const double scale) const;
    XYZ GetShift() const;
+   XYZ GetCenter() const;
+   RotationMatrix GetMatrix() const;
 
  private:
 
@@ -53,7 +56,8 @@ class Coordinates : public XYZArray
    PRNG & prngRef;
    MoleculeLookup & molLookRef;
    Molecules const& molRef;
-   XYZ shift;
+   XYZ shift, center;
+   RotationMatrix matrix;
 };
 
 

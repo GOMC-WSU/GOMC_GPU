@@ -6,7 +6,7 @@
 #define _USE_MATH_DEFINES
 #endif
 #include <math.h>           //cos and sin
-
+#include <stdio.h>
 class TransformMatrix;
 typedef TransformMatrix RotationMatrix;
 
@@ -60,16 +60,21 @@ class TransformMatrix
       XYZ Apply(const XYZ& pos) const;
 
 
-
       //returns the inverse=transpose of this matrix
       TransformMatrix Inverse() const;
 
+      double GetMatrix(int i, int j);
 
    private:
       static const uint N = 3;
       double matrix[N][N];
       
 };
+
+inline double TransformMatrix::GetMatrix(int i, int j)
+{
+	return matrix[i][j];
+}
 
 inline void TransformMatrix::SetDiagonal(double d)
 {
@@ -136,7 +141,8 @@ inline XYZ TransformMatrix::Apply(const XYZ& pos) const
    return result;
 }
 
-inline void TransformMatrix::BasisRotation(const XYZ& u, 
+
+inline void TransformMatrix::BasisRotation(const XYZ& u,
       const XYZ& v, const XYZ& w)
 {
    //column vectors are the basis vectors

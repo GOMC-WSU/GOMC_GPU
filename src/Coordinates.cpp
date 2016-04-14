@@ -1,5 +1,4 @@
 #include "Coordinates.h"
-#include "TransformMatrix.h"
 #include <algorithm>          //For copy
 #include <cmath>
 #include <cassert>
@@ -43,16 +42,17 @@ void Coordinates::RotateRand
 {
    //Rotate (-max, max) radians about a uniformly random vector
    //Not uniformly random, but symmetrical wrt detailed balance
-   RotationMatrix matrix = RotationMatrix::FromAxisAngle(
+   matrix = RotationMatrix::FromAxisAngle(
       prngRef.Sym(max), prngRef.PickOnUnitSphere());
 
-   XYZ center = comRef.Get(m);
+   center = comRef.Get(m);
    uint stop = 0;
    molRef.GetRange(pStart, stop, pLen, m);
    //Copy coordinates
    CopyRange(dest, pStart, 0, pLen);
 
    boxDimRef.UnwrapPBC(dest, b, center);
+
    //Do rotation
    for (uint p = 0; p < pLen; p++) //Rotate each point.
    {
@@ -113,5 +113,15 @@ void Coordinates::TranslateOneBox
 XYZ Coordinates::GetShift() const
 {
 	return shift;
+}
+
+XYZ Coordinates::GetCenter() const
+{
+	return center;
+}
+
+RotationMatrix Coordinates::GetMatrix() const
+{
+	return matrix;
 }
 

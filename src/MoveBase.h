@@ -155,7 +155,7 @@ inline void Translate::CalcEn()
 //		             << ", z: " << coordCurrRef.z[i]
 //		             << ", newX: " << newMolPos.x[i-pStart] << ", newY: " << newMolPos.y[i-pStart] << ", newZ: " << newMolPos.z[i-pStart] << std::endl;
 //	   }
-	   recip.energy = calcEwald.MolReciprocal(pStart, pLen, m, b, coordCurrRef.GetShift()) - sysPotRef.boxEnergy[b].recip;
+	   recip.energy = calcEwald.MolReciprocal(pStart, pLen, m, b, coordCurrRef.GetShift(), 0, coordCurrRef.GetMatrix()) - sysPotRef.boxEnergy[b].recip;
    }
    calcEnRef.MoleculeInter(inter_LJ, inter_Real, newMolPos, m, b, &newCOM);
 }
@@ -171,7 +171,7 @@ inline void Translate::Accept(const uint rejectState, const uint step)
 
 //	   std::cout << "step: " << step << ", accept: " << res << ", pr: " << pr << ", interLJ: " << inter_LJ.energy << ", interReal: "
 //			   << inter_Real.energy << ", recip difference: " << recip.energy << ", recip old: " << sysPotRef.boxEnergy[b].recip << std::endl;
-}
+   }
    bool result = (rejectState == mv::fail_state::NO_FAIL) && res;
 
    if (result)
@@ -262,7 +262,7 @@ inline void Rotate::CalcEn()
 //					 << ", z: " << coordCurrRef.z[i]
 //					 << ", newX: " << newMolPos.x[i-pStart] << ", newY: " << newMolPos.y[i-pStart] << ", newZ: " << newMolPos.z[i-pStart] << std::endl;
 //		}
-		recip.energy = calcEwald.MolReciprocal(pStart, pLen, m, b, coordCurrRef.GetShift()) - sysPotRef.boxEnergy[b].recip;
+		recip.energy = calcEwald.MolReciprocal(pStart, pLen, m, b, coordCurrRef.GetCenter(), 1, coordCurrRef.GetMatrix()) - sysPotRef.boxEnergy[b].recip;
    }
    calcEnRef.MoleculeInter(inter_LJ, inter_Real, newMolPos, m, b);
 }
@@ -277,7 +277,10 @@ inline void Rotate::Accept(const uint rejectState, const uint step)
 			      recip.energy));
    }
    bool result = (rejectState == mv::fail_state::NO_FAIL) && res;
-	
+
+//   std::cout << "step: " << step << ", accept: " << result << ", interLJ: " << inter_LJ.energy << ", interReal: "
+//		   << inter_Real.energy << ", recip difference: " << recip.energy << ", recip old: " << sysPotRef.boxEnergy[b].recip << std::endl;
+
    if (result)
    {
       //Set new energy.
