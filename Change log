@@ -7,6 +7,9 @@ All notable changes to this project will be documented in this file.
 
 ###############################################################################
 
+## [1.7] - 04/15/2016
++ Volume move calculation of GEMC_NVT is completed and verified.
+
 ## [1.7] - 04/14/2016
 - Remove cudaMalloc and cudaFree from iteration and put them into class. Therefore, API calls will not be run in every step, which is very expensive. Performance is 3X than before.
 

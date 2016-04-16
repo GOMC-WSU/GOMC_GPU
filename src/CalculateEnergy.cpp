@@ -103,24 +103,26 @@ SystemPotential CalculateEnergy::SystemInter
 (SystemPotential potential,
  XYZArray const& coords,
  XYZArray const& com,
- BoxDimensions const& boxAxes) 
+ BoxDimensions const& boxAxes,
+ bool volume)
 {
    for (uint b = 0; b < BOXES_WITH_U_NB; ++b)
    {
-      potential = BoxInter(potential, coords, com, boxAxes, b);
+//      potential = BoxInter(potential, coords, com, boxAxes, b);
       if (ewald)
       {
     	  calcEwald->RecipInit(b, boxAxes);
       }
    }
-
+   if (volume && ewald)
+	   calcEwald->PrepareVolumeMove(coords);
    if (ewald)
    {
-//	   calcEwald->InitGPU();
+	   if (!volume)
+		   calcEwald->SetupGPUKernel();
 	   for (uint b = 0; b < BOXES_WITH_U_NB; ++b)
 	   {
-		   potential.boxEnergy[b].recip = calcEwald->BoxReciprocal(b, coords);
-		   std::cout << "box reciprocal on box: " << b << " is scheduled" << std::endl;
+		   potential.boxEnergy[b].recip = calcEwald->BoxReciprocal(b, coords, volume);
 	   }
    }
    potential.Total();

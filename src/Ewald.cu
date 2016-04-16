@@ -28,6 +28,8 @@
 //	  Developed by Yuanzhe. Li
 //
 
+//#define debug
+
 using namespace geom;
 __device__ unsigned int BlocksDone = 0;
 
@@ -167,52 +169,11 @@ void Ewald::InitGPU()
 		}
 
 		error = cudaMalloc((void**)&gpu_xCoords, sizeof(double) * currentCoords.Count());
-		if (error != cudaSuccess)
-		{
-			std::cout << "cudaMalloc gpu_xCoords returned error " <<
-					cudaGetErrorString(error) << "code: " << error << std::endl;
-			exit(EXIT_FAILURE);
-		}
-
 		error = cudaMalloc((void**)&gpu_yCoords, sizeof(double) * currentCoords.Count());
-		if (error != cudaSuccess)
-		{
-			std::cout << "cudaMalloc gpu_yCoords returned error " <<
-					cudaGetErrorString(error) << "code: " << error << std::endl;
-			exit(EXIT_FAILURE);
-		}
-
 		error = cudaMalloc((void**)&gpu_zCoords, sizeof(double) * currentCoords.Count());
-		if (error != cudaSuccess)
-		{
-			std::cout << "cudaMalloc gpu_zCoords returned error " <<
-					cudaGetErrorString(error) << "code: " << error << std::endl;
-			exit(EXIT_FAILURE);
-		}
-
-		error = cudaMalloc((void**)&gpu_xTempCoords, sizeof(double) * currentCoords.Count());
-		if (error != cudaSuccess)
-		{
-			std::cout << "cudaMalloc gpu_xTempCoords returned error " <<
-					cudaGetErrorString(error) << "code: " << error << std::endl;
-			exit(EXIT_FAILURE);
-		}
-
-		error = cudaMalloc((void**)&gpu_yTempCoords, sizeof(double) * currentCoords.Count());
-		if (error != cudaSuccess)
-		{
-			std::cout << "cudaMalloc gpu_yTempCoords returned error " <<
-					cudaGetErrorString(error) << "code: " << error << std::endl;
-			exit(EXIT_FAILURE);
-		}
-
-		error = cudaMalloc((void**)&gpu_zTempCoords, sizeof(double) * currentCoords.Count());
-		if (error != cudaSuccess)
-		{
-			std::cout << "cudaMalloc gpu_zTempCoords returned error " <<
-					cudaGetErrorString(error) << "code: " << error << std::endl;
-			exit(EXIT_FAILURE);
-		}
+		error = cudaMalloc((void**)&gpu_xCoordsNew, sizeof(double) * currentCoords.Count());
+		error = cudaMalloc((void**)&gpu_yCoordsNew, sizeof(double) * currentCoords.Count());
+		error = cudaMalloc((void**)&gpu_zCoordsNew, sizeof(double) * currentCoords.Count());
 
 		error = cudaMalloc((void**)&gpu_molStartAtom, sizeof(int) * mols.count);
 		if (error != cudaSuccess)
@@ -230,14 +191,6 @@ void Ewald::InitGPU()
 			exit(EXIT_FAILURE);
 		}
 
-		error = cudaMalloc((void**)&gpu_prefact, sizeof(double) * imageTotal);
-		if (error != cudaSuccess)
-		{
-			std::cout << "cudaMalloc gpu_prefact returned error " <<
-					cudaGetErrorString(error) << "code: " << error << std::endl;
-			exit(EXIT_FAILURE);
-		}
-
 		error = cudaMalloc((void**)&gpu_recipEnergy, sizeof(double) * BOX_TOTAL);
 		if (error != cudaSuccess)
 		{
@@ -246,29 +199,14 @@ void Ewald::InitGPU()
 			exit(EXIT_FAILURE);
 		}
 
+		error = cudaMalloc((void**)&gpu_prefact, sizeof(double) * imageTotal);
 		error = cudaMalloc((void**)&gpu_kx, sizeof(double) * imageTotal);
-		if (error != cudaSuccess)
-		{
-			std::cout << "cudaMalloc gpu_kx returned error " <<
-					cudaGetErrorString(error) << "code: " << error << std::endl;
-			exit(EXIT_FAILURE);
-		}
-
 		error = cudaMalloc((void**)&gpu_ky, sizeof(double) * imageTotal);
-		if (error != cudaSuccess)
-		{
-			std::cout << "cudaMalloc gpu_ky returned error " <<
-					cudaGetErrorString(error) << "code: " << error << std::endl;
-			exit(EXIT_FAILURE);
-		}
-
 		error = cudaMalloc((void**)&gpu_kz, sizeof(double) * imageTotal);
-		if (error != cudaSuccess)
-		{
-			std::cout << "cudaMalloc gpu_kz returned error " <<
-					cudaGetErrorString(error) << "code: " << error << std::endl;
-			exit(EXIT_FAILURE);
-		}
+		error = cudaMalloc((void**)&gpu_prefactNew, sizeof(double) * imageTotal);
+		error = cudaMalloc((void**)&gpu_kxNew, sizeof(double) * imageTotal);
+		error = cudaMalloc((void**)&gpu_kyNew, sizeof(double) * imageTotal);
+		error = cudaMalloc((void**)&gpu_kzNew, sizeof(double) * imageTotal);
 
 		error = cudaMalloc((void**)&gpu_imageReal, sizeof(double) * imageTotal);
 		if (error != cudaSuccess)
@@ -320,30 +258,26 @@ void Ewald::InitGPU()
 		}
 
 		//each box has its own gpu arrays for threads reduction and value return.
-		int blockSize0, blockSize1, gridSize0, gridSize1;
-		//box 0
 		if(imageSize[0] <= MAXTHREADSPERBLOCK)
 		{
-		   blockSize0 = imageSize[0];
+		   recipBlockSize[0] = imageSize[0];
 		}
 		else
 		{
-		   blockSize0 = MAXTHREADSPERBLOCK;
+		   recipBlockSize[0] = MAXTHREADSPERBLOCK;
 		}
 		if(imageSize[1] <= MAXTHREADSPERBLOCK)
 		{
-		   blockSize1 = imageSize[1];
+		   recipBlockSize[1] = imageSize[1];
 		}
 		else
 		{
-		   blockSize1 = MAXTHREADSPERBLOCK;
+		   recipBlockSize[1] = MAXTHREADSPERBLOCK;
 		}
-		gridSize0 = (imageSize[0] + MAXTHREADSPERBLOCK - 1) / MAXTHREADSPERBLOCK ;
-		gridSize1 = (imageSize[1] + MAXTHREADSPERBLOCK - 1) / MAXTHREADSPERBLOCK ;
-		cudaMalloc((void**)&gpu_blockRecipNew, sizeof(double) * (gridSize0 + gridSize1));
+		recipGridSize[0] = (imageSize[0] + MAXTHREADSPERBLOCK - 1) / MAXTHREADSPERBLOCK ;
+		recipGridSize[1] = (imageSize[1] + MAXTHREADSPERBLOCK - 1) / MAXTHREADSPERBLOCK ;
+		cudaMalloc((void**)&gpu_blockRecipNew, sizeof(double) * (recipGridSize[0] + recipGridSize[1]));
 		cudaMalloc((void**)&gpu_rotateMatrix, sizeof(double) * 9);
-
-		//box 1
 
 		std::cout << "cudaMalloc is done." << std::endl;
 		//load to GPU
@@ -517,8 +451,7 @@ void Ewald::RecipInit(uint box, BoxDimensions const& boxAxes)
    double constValue = 2 * M_PI / boxAxes.axis.BoxSize(box);
    double vol = boxAxes.volume[box] / (4 * M_PI);
    int kmax = int(recip_rcut * boxAxes.axis.BoxSize(box) / (2 * M_PI)) + 1;
-   //int kmax = 5;
-   printf("kmax: %d\n", kmax);
+//   int kmax = 5;
    for (int x = 0; x <= kmax; x++)
    {
       int nky_max = sqrt(pow(kmax, 2) - pow(x, 2));
@@ -556,44 +489,48 @@ void Ewald::RecipInit(uint box, BoxDimensions const& boxAxes)
 }
 
 //calculate reciprocate term for a box
-double Ewald::BoxReciprocal(int box, XYZArray const& molCoords)
+double Ewald::BoxReciprocal(int box, XYZArray const& molCoords, bool volume)
 {
    //This is the global array used to store the addition of reciprocal real and imaginary
    //of each block
-   int gridSize, blockSize, atomOffset, imageOffset;
-   double *gpu_blockRecipEnergy;
-
-   if(imageSize[box] <= MAXTHREADSPERBLOCK)
-	   blockSize = imageSize[box];
-   else
-	   blockSize = MAXTHREADSPERBLOCK;
-   gridSize = (imageSize[box] + MAXTHREADSPERBLOCK - 1) / MAXTHREADSPERBLOCK ;
+   int atomOffset, imageOffset, gridOffset;
 
    if (box == 0)
    {
 	   atomOffset = 0;
 	   imageOffset = 0;
+	   gridOffset = 0;
    }
    else if (box == 1)
    {
 	   atomOffset = atomPerBox[0];
 	   imageOffset = imageSize[0];
+	   gridOffset = recipGridSize[0];
    }
-   cudaMalloc((void**)&gpu_blockRecipEnergy, sizeof(double) * gridSize);
 
    if (box < BOXES_WITH_U_NB)
    {
-      BoxReciprocalGPU<<<gridSize, blockSize, 0, streams[box]>>>(
-    		  atomPerBox[box], atomOffset, gpu_xCoords, gpu_yCoords,
-    		  gpu_zCoords, gpu_atomCharge, gpu_imageReal,
-    		  gpu_imageImaginary, gpu_kx, gpu_ky, gpu_kz,
-    		  gpu_prefact, box, imageOffset,
-    		  gpu_blockRecipEnergy, imageSize[box]);
-
-      cudaMemcpyAsync(&blockRecipEnergy[box], gpu_blockRecipEnergy, sizeof(double), cudaMemcpyDeviceToHost, streams[box]);
+	   if (!volume)
+	   {
+		  BoxReciprocalGPU<<<recipGridSize[box], recipBlockSize[box], 0, streams[box]>>>(
+				  atomPerBox[box], atomOffset, gpu_xCoords, gpu_yCoords,
+				  gpu_zCoords, gpu_atomCharge, gpu_imageReal,
+				  gpu_imageImaginary, gpu_kx, gpu_ky, gpu_kz,
+				  gpu_prefact, box, imageOffset, gridOffset,
+				  gpu_blockRecipNew, imageSize[box]);
+	   }
+	   else
+	   {
+		   BoxReciprocalGPU<<<recipGridSize[box], recipBlockSize[box], 0, streams[box]>>>(
+		   				  atomPerBox[box], atomOffset, gpu_xCoordsNew, gpu_yCoordsNew,
+		   				  gpu_zCoordsNew, gpu_atomCharge, gpu_imageRealRef,
+		   				  gpu_imageImaginaryRef, gpu_kxNew, gpu_kyNew, gpu_kzNew,
+		   				  gpu_prefactNew, box, imageOffset, gridOffset,
+		   				  gpu_blockRecipNew, imageSize[box]);
+	   }
+      cudaMemcpyAsync(&blockRecipEnergy[box], &gpu_blockRecipNew[gridOffset], sizeof(double), cudaMemcpyDeviceToHost, streams[box]);
       cudaStreamSynchronize(streams[box]);
    }
-   cudaFree(gpu_blockRecipEnergy);
 
    return blockRecipEnergy[box];
 }
@@ -658,26 +595,7 @@ double Ewald::MolReciprocal(const uint pStart, const uint pLen, const uint molIn
 		   const uint box, const XYZ shiftOrCenter, const int moveType, RotationMatrix matrix)
 {
 	double rotateMatrix[9];
-	int gridSize[2], blockSize[2], imageOffset, gridOffset;
-
-	if(imageSize[0] <= MAXTHREADSPERBLOCK)
-	{
-	   blockSize[0] = imageSize[0];
-	}
-	else
-	{
-	   blockSize[0] = MAXTHREADSPERBLOCK;
-	}
-	if(imageSize[1] <= MAXTHREADSPERBLOCK)
-	{
-	   blockSize[1] = imageSize[1];
-	}
-	else
-	{
-	   blockSize[1] = MAXTHREADSPERBLOCK;
-	}
-	gridSize[0] = (imageSize[0] + MAXTHREADSPERBLOCK - 1) / MAXTHREADSPERBLOCK ;
-	gridSize[1] = (imageSize[1] + MAXTHREADSPERBLOCK - 1) / MAXTHREADSPERBLOCK ;
+	int imageOffset, gridOffset;
 
 	if (box == 0)
 	{
@@ -687,7 +605,7 @@ double Ewald::MolReciprocal(const uint pStart, const uint pLen, const uint molIn
 	else if (box == 1)
 	{
 	   imageOffset = imageSize[0];
-	   gridOffset = gridSize[0];
+	   gridOffset = recipGridSize[0];
 	}
 
 	for (int i = 0; i < 3; i++)
@@ -702,7 +620,7 @@ double Ewald::MolReciprocal(const uint pStart, const uint pLen, const uint molIn
 	if (box < BOXES_WITH_U_NB)
 	{
 		if (moveType == 0)
-			MolReciprocalDisplaceGPU<<<gridSize[box], blockSize[box], maxMolLen * 3 * sizeof(double), streams[box]>>>(
+			MolReciprocalDisplaceGPU<<<recipGridSize[box], recipBlockSize[box], maxMolLen * 3 * sizeof(double), streams[box]>>>(
 					pStart, pLen, molIndex, shiftOrCenter,
 					gpu_xCoords, gpu_yCoords, gpu_zCoords, gpu_atomCharge,
 					gpu_imageReal, gpu_imageImaginary, gpu_imageRealRef,
@@ -711,7 +629,7 @@ double Ewald::MolReciprocal(const uint pStart, const uint pLen, const uint molIn
 					gpu_blockRecipNew, imageSize[box], currentAxes.axis.x[box],
 					currentAxes.axis.y[box], currentAxes.axis.z[box], maxMolLen);
 		else if (moveType == 1)
-			MolReciprocalRotateGPU<<<gridSize[box], blockSize[box], maxMolLen * 3 * sizeof(double), streams[box]>>>(
+			MolReciprocalRotateGPU<<<recipGridSize[box], recipBlockSize[box], maxMolLen * 3 * sizeof(double), streams[box]>>>(
 					pStart, pLen, molIndex, shiftOrCenter,
 					gpu_xCoords, gpu_yCoords, gpu_zCoords, gpu_atomCharge,
 					gpu_imageReal, gpu_imageImaginary, gpu_imageRealRef,
@@ -1017,6 +935,141 @@ void Ewald::RestoreGPU(uint box)
 		cudaStreamSynchronize(streams[box]);
 }
 
+void Ewald::SetupGPUKernel()
+{
+	//each box has its own gpu arrays for threads reduction and value return.
+	if(imageSize[0] <= MAXTHREADSPERBLOCK)
+	{
+	   recipBlockSize[0] = imageSize[0];
+	}
+	else
+	{
+	   recipBlockSize[0] = MAXTHREADSPERBLOCK;
+	}
+	if(imageSize[1] <= MAXTHREADSPERBLOCK)
+	{
+	   recipBlockSize[1] = imageSize[1];
+	}
+	else
+	{
+	   recipBlockSize[1] = MAXTHREADSPERBLOCK;
+	}
+	int imageTotal = imageSize[0] + imageSize[1];
+	recipGridSize[0] = (imageSize[0] + MAXTHREADSPERBLOCK - 1) / MAXTHREADSPERBLOCK ;
+	recipGridSize[1] = (imageSize[1] + MAXTHREADSPERBLOCK - 1) / MAXTHREADSPERBLOCK ;
+}
+
+void Ewald::AcceptVolumeMove()
+{
+	//check if imageSize is changed or not. If not changed, don't do cudaFree & cudaMalloc
+	/*
+	cudaMemcpy(gpu_imageReal, gpu_imageRealRef, sizeof(double) * (imageSize[0] + imageSize[1]), cudaMemcpyDeviceToDevice);
+	cudaMemcpy(gpu_imageImaginary, gpu_imageImaginaryRef, sizeof(double) * (imageSize[0] + imageSize[1]), cudaMemcpyDeviceToDevice);
+	cudaMemcpy(gpu_prefact, gpu_prefactNew, sizeof(double) * (imageSize[0] + imageSize[1]), cudaMemcpyDeviceToDevice);
+	cudaMemcpy(gpu_kx, gpu_kxNew, sizeof(double) * (imageSize[0] + imageSize[1]), cudaMemcpyDeviceToDevice);
+	cudaMemcpy(gpu_ky, gpu_kyNew, sizeof(double) * (imageSize[0] + imageSize[1]), cudaMemcpyDeviceToDevice);
+	cudaMemcpy(gpu_kz, gpu_kzNew, sizeof(double) * (imageSize[0] + imageSize[1]), cudaMemcpyDeviceToDevice);
+	cudaMemcpy(gpu_xCoords, gpu_xCoordsNew, sizeof(double) * (imageSize[0] + imageSize[1]), cudaMemcpyDeviceToDevice);
+	cudaMemcpy(gpu_yCoords, gpu_yCoordsNew, sizeof(double) * (imageSize[0] + imageSize[1]), cudaMemcpyDeviceToDevice);
+	cudaMemcpy(gpu_zCoords, gpu_zCoordsNew, sizeof(double) * (imageSize[0] + imageSize[1]), cudaMemcpyDeviceToDevice);
+	*/
+	double *tempA, *tempB, *tempC;
+	tempA = gpu_imageReal;
+	tempB = gpu_imageImaginary;
+	gpu_imageReal = gpu_imageRealRef;
+	gpu_imageImaginary = gpu_imageImaginaryRef;
+	gpu_imageRealRef = tempA;
+	gpu_imageImaginaryRef = tempB;
+
+	tempA = gpu_prefact;
+	gpu_prefact = gpu_prefactNew;
+	gpu_prefactNew = tempA;
+
+	tempA = gpu_kx;
+	tempB = gpu_ky;
+	tempC = gpu_kz;
+	gpu_kx = gpu_kxNew;
+	gpu_ky = gpu_kyNew;
+	gpu_kz = gpu_kzNew;
+	gpu_kxNew = tempA;
+	gpu_kyNew = tempB;
+	gpu_kzNew = tempC;
+
+	tempA = gpu_xCoords;
+	tempB = gpu_yCoords;
+	tempC = gpu_zCoords;
+	gpu_xCoords = gpu_xCoordsNew;
+	gpu_yCoords = gpu_yCoordsNew;
+	gpu_zCoords = gpu_zCoordsNew;
+	gpu_xCoordsNew = tempA;
+	gpu_yCoordsNew = tempB;
+	gpu_zCoordsNew = tempC;
+}
+
+void Ewald::RejectVolumeMove()
+{
+	//if imageSize is not changed, do not need to run this function.
+	cudaFree(gpu_blockRecipNew);
+	SetupGPUKernel();
+	cudaMalloc((void**)&gpu_blockRecipNew, sizeof(double) * (recipGridSize[0] + recipGridSize[1]));
+}
+
+void Ewald::PrepareVolumeMove(XYZArray const &coords)
+{
+	//check if imageSize is changed or not. If not change, no necessary to free and re-malloc
+	cudaFree(gpu_imageRealRef);
+	cudaFree(gpu_imageImaginaryRef);
+	cudaFree(gpu_blockRecipNew);
+	cudaFree(gpu_prefactNew);
+	cudaFree(gpu_kxNew);
+	cudaFree(gpu_kyNew);
+	cudaFree(gpu_kzNew);
+	cudaMalloc((void**)&gpu_prefactNew, sizeof(double) * imageTotal);
+	cudaMalloc((void**)&gpu_kxNew, sizeof(double) * imageTotal);
+	cudaMalloc((void**)&gpu_kyNew, sizeof(double) * imageTotal);
+	cudaMalloc((void**)&gpu_kzNew, sizeof(double) * imageTotal);
+	cudaMalloc((void**)&gpu_imageRealRef, sizeof(double) * imageTotal);
+	cudaMalloc((void**)&gpu_imageImaginaryRef, sizeof(double) * imageTotal);
+	SetupGPUKernel();
+	cudaMalloc((void**)&gpu_blockRecipNew, sizeof(double) * (recipGridSize[0] + recipGridSize[1]));
+
+	if (BOX_TOTAL==1)
+	{
+		molPerBox[0] = mols.count;
+		for (int i = 0; i < imageSize[0]; i++)
+		{
+			h_prefact[i] = prefact[0][i];
+			h_kx[i] = kx[0][i];
+			h_ky[i] = ky[0][i];
+			h_kz[i] = kz[0][i];
+		}
+	}
+	else
+	{
+		int index;
+		for (int i = 0; i < BOX_TOTAL; i++)
+		{
+			molPerBox[i] = molLookup.NumInBox(i);
+			for (int j = 0; j < imageSize[i]; j++)
+			{
+				index = j + i * imageSize[0];
+				h_prefact[index] = prefact[i][j];
+				h_kx[index] = kx[i][j];
+				h_ky[index] = ky[i][j];
+				h_kz[index] = kz[i][j];
+			}
+		}
+	}
+
+	cudaMemcpy(gpu_kxNew, h_kx, sizeof(double) * imageTotal, cudaMemcpyHostToDevice);
+	cudaMemcpy(gpu_kyNew, h_ky, sizeof(double) * imageTotal, cudaMemcpyHostToDevice);
+	cudaMemcpy(gpu_kzNew, h_kz, sizeof(double) * imageTotal, cudaMemcpyHostToDevice);
+	cudaMemcpy(gpu_prefactNew, h_prefact, sizeof(double) * imageTotal, cudaMemcpyHostToDevice);
+	cudaMemcpy(gpu_xCoordsNew, coords.x, sizeof(double) * coords.Count(), cudaMemcpyHostToDevice);
+	cudaMemcpy(gpu_yCoordsNew, coords.y, sizeof(double) * coords.Count(), cudaMemcpyHostToDevice);
+	cudaMemcpy(gpu_zCoordsNew, coords.z, sizeof(double) * coords.Count(), cudaMemcpyHostToDevice);
+}
+
 __device__ double DotProductGPU(
 		double kx, double ky, double kz,
 		double *xCoords, double *yCoords,
@@ -1105,8 +1158,8 @@ __global__ void BoxReciprocalGPU(
 		double *gpu_xCoords, double *gpu_yCoords,
 		double *gpu_zCoords, double *gpu_atomCharge,
 		double *gpu_imageReal, double *gpu_imageImaginary,
-		double *gpu_kx, double *gpu_ky, double *gpu_kz,
-		double *gpu_prefact, const uint box, const uint imageOffset,
+		double *gpu_kx, double *gpu_ky, double *gpu_kz, double *gpu_prefact,
+		const uint box, const uint imageOffset, const uint gridOffset,
 		double *gpu_blockRecipEnergy, const uint imageSize)
 {
 	__shared__ double imageSum[MAXTHREADSPERBLOCK];
@@ -1134,10 +1187,11 @@ __global__ void BoxReciprocalGPU(
 		{
 			//dotProduct = DotProductGPU(kx, ky, kz, gpu_xCoords, gpu_yCoords, gpu_zCoords, i);
 			dotProduct = DotProductGPU(kx, ky, kz, gpu_xCoords, gpu_yCoords, gpu_zCoords, i);
-//			if (i == 30)
-//				printf("image: %d, atom: %d, dotProduct: %lf, atomCharge: %lf, kx: %lf, ky: %lf, kz: %lf, x: %lf, y: %lf, z: %lf\n",
-//						imageIndex, i, dotProduct, gpu_atomCharge[i], kx, ky, kz, gpu_xCoords[i], gpu_yCoords[i], gpu_zCoords[i]);
-
+#ifdef debug
+			if (i == 30)
+				printf("image: %d, atom: %d, dotProduct: %lf, atomCharge: %lf, kx: %lf, ky: %lf, kz: %lf, x: %lf, y: %lf, z: %lf\n",
+						imageIndex, i, dotProduct, gpu_atomCharge[i], kx, ky, kz, gpu_xCoords[i], gpu_yCoords[i], gpu_zCoords[i]);
+#endif
 			sinecosine(dotProduct, sine, cosine);
 			sumReal += (gpu_atomCharge[i] * cosine);
 			sumImaginary += (gpu_atomCharge[i] * sine);
@@ -1146,9 +1200,11 @@ __global__ void BoxReciprocalGPU(
 		gpu_imageReal[imageIndex] = sumReal;
 		gpu_imageImaginary[imageIndex] = sumImaginary;
 		imageSum[threadIdx.x] = (sumReal * sumReal + sumImaginary * sumImaginary)  * gpu_prefact[imageIndex];
-//		if (threadId == 0)
-//			printf("box: %d, image: %d, cacheReal: %lf, cacheImaginary: %lf, sum: %lf\n",
-//					box, threadId, sumReal, sumImaginary, imageSum[threadIdx.x]);
+#ifdef debug
+		if (threadId == 0)
+			printf("box: %d, image: %d, cacheReal: %lf, cacheImaginary: %lf, sum: %lf\n",
+					box, threadId, sumReal, sumImaginary, imageSum[threadIdx.x]);
+#endif
 	}
 	//after the calculation of each thread, implement reduction on gpu_imageReal
 	//and gpu_imageImaginary within the block, and then another reduction between blocks
@@ -1202,7 +1258,7 @@ __global__ void BoxReciprocalGPU(
 	}
 
 	if (threadIdx.x == 0) {
-		gpu_blockRecipEnergy[blockIdx.x] = imageSum[0];
+		gpu_blockRecipEnergy[gridOffset + blockIdx.x] = imageSum[0];
 		__threadfence();
 		lastBlock = (atomicInc(&BlocksDone, gridDim.x) == gridDim.x - 1);
 	}       //end if
@@ -1212,12 +1268,12 @@ __global__ void BoxReciprocalGPU(
 	if (lastBlock) {
 		//If this thread corresponds to a valid block
 		if (threadIdx.x < gridDim.x) {
-			imageSum[threadIdx.x] = gpu_blockRecipEnergy[threadIdx.x];
+			imageSum[threadIdx.x] = gpu_blockRecipEnergy[gridOffset + threadIdx.x];
 		}
 
 		for (int i = blockDim.x; threadIdx.x + i < gridDim.x; i += blockDim.x) {
 			if (threadIdx.x + i < gridDim.x) {
-				imageSum[threadIdx.x] += gpu_blockRecipEnergy[threadIdx.x + i];
+				imageSum[threadIdx.x] += gpu_blockRecipEnergy[gridOffset + threadIdx.x + i];
 			}       //end if
 		}       //end for
 
@@ -1234,8 +1290,10 @@ __global__ void BoxReciprocalGPU(
 
 		if (threadIdx.x == 0) {
 			BlocksDone = 0;
-			gpu_blockRecipEnergy[0] = imageSum[0];
-			printf("box: %d, TotalRecipEnergy: %lf\n", box, gpu_blockRecipEnergy[0]);
+			gpu_blockRecipEnergy[gridOffset] = imageSum[0];
+#ifdef debug
+			printf("box: %d, TotalRecipEnergy: %lf\n", box, gpu_blockRecipEnergy[gridOffset]);
+#endif
 		}
 	}
 }
@@ -1270,6 +1328,7 @@ __global__ void MolReciprocalDisplaceGPU(
 	double sumImaginaryOld = 0.0;
 	double dotProductNew = 0.0;
 	double dotProductOld = 0.0;
+	double prefact = 0.0;
 
 	if (threadIdx.x == 0)
 	{
@@ -1295,6 +1354,7 @@ __global__ void MolReciprocalDisplaceGPU(
 
 	if (threadId < imageSize)
 	{
+		prefact = gpu_prefact[imageIndex];
 		kx = gpu_kx[imageIndex];
 		ky = gpu_ky[imageIndex];
 		kz = gpu_kz[imageIndex];
@@ -1312,11 +1372,26 @@ __global__ void MolReciprocalDisplaceGPU(
 
 			sumRealOld += (gpu_atomCharge[atomIndex] * cosineOld);
 			sumImaginaryOld += (gpu_atomCharge[atomIndex] * sineOld);
+#ifdef debug
+			if (imageIndex == 1 + imageOffset)
+			{
+				printf("kx: %lf, ky: %lf, kz: %lf, dotProductNew: %lf, dotProductOld: %lf\n", kx, ky, kz, dotProductNew, dotProductOld);
+				printf("GPU box: %d, mol: %d, atom: %d, x: %lf, y: %lf, z: %lf, newX: %lf, newY: %lf, newZ: %lf\n",
+						box, molIndex, p, gpu_xCoords[atomIndex], gpu_yCoords[atomIndex], gpu_zCoords[atomIndex],
+						Array[p], Array[p + pLen], Array[p + 2*pLen]);
+			}
+#endif
 		}
 		double sumRnew = gpu_imageRealRef[imageIndex] = gpu_imageReal[imageIndex] - sumRealOld + sumRealNew;
 		double sumInew = gpu_imageImaginaryRef[imageIndex] = gpu_imageImaginary[imageIndex] - sumImaginaryOld + sumImaginaryNew;
 
-		imageSumNew[threadIdx.x] += (sumRnew * sumRnew + sumInew * sumInew) * gpu_prefact[imageIndex];
+		imageSumNew[threadIdx.x] += (sumRnew * sumRnew + sumInew * sumInew) * prefact;
+#ifdef debug
+		if (threadId == 0)
+			printf("box: %d, image: %d, sumRnew: %lf, sumInew: %lf, sumRold: %lf, sumIold: %lf, cacheRold: %lf, cacheIold: %lf, "
+					"newReal: %lf, newImaginary: %lf, prefact: %lf\n", box, threadId, sumRealNew, sumImaginaryNew, sumRealOld,
+					sumImaginaryOld, gpu_imageReal[imageIndex], gpu_imageImaginary[imageIndex], sumRnew, sumInew, prefact);
+#endif
 	}
 
 	//after the calculation of each thread, implement reduction on gpu_imageReal
@@ -1404,6 +1479,9 @@ __global__ void MolReciprocalDisplaceGPU(
 		if (threadIdx.x == 0) {
 			BlocksDone = 0;
 			gpu_blockRecipNew[gridOffset] = imageSumNew[0];
+#ifdef debug
+			printf("box: %d, RecipEnergyNew: %lf\n", box, gpu_blockRecipNew[gridOffset]);
+#endif
 		}
 	}
 }
@@ -1441,6 +1519,7 @@ __global__ void MolReciprocalRotateGPU(
 	double xHalfAxis = xAxis/2;
 	double yHalfAxis = yAxis/2;
 	double zHalfAxis = zAxis/2;
+	double prefact;
 
 	if (threadIdx.x == 0)
 	{
@@ -1474,6 +1553,7 @@ __global__ void MolReciprocalRotateGPU(
 
 	if (threadId < imageSize)
 	{
+		prefact = gpu_prefact[imageIndex];
 		kx = gpu_kx[imageIndex];
 		ky = gpu_ky[imageIndex];
 		kz = gpu_kz[imageIndex];
@@ -1491,24 +1571,27 @@ __global__ void MolReciprocalRotateGPU(
 
 			sumRealOld += (gpu_atomCharge[atomIndex] * cosineOld);
 			sumImaginaryOld += (gpu_atomCharge[atomIndex] * sineOld);
-
-//			if (imageIndex == 1 + imageOffset)
-//			{
-//				printf("kx: %lf, ky: %lf, kz: %lf, dotProductNew: %lf, dotProductOld: %lf\n", kx, ky, kz, dotProductNew, dotProductOld);
-//				printf("GPU box: %d, mol: %d, atom: %d, x: %lf, y: %lf, z: %lf, newX: %lf, newY: %lf, newZ: %lf\n",
-//						box, molIndex, p, gpu_xCoords[atomIndex], gpu_yCoords[atomIndex], gpu_zCoords[atomIndex],
-//						Array[p], Array[p + pLen], Array[p + 2*pLen]);
-//			}
+#ifdef debug
+			if (imageIndex == 1 + imageOffset)
+			{
+				printf("kx: %lf, ky: %lf, kz: %lf, dotProductNew: %lf, dotProductOld: %lf\n", kx, ky, kz, dotProductNew, dotProductOld);
+				printf("GPU box: %d, mol: %d, atom: %d, x: %lf, y: %lf, z: %lf, newX: %lf, newY: %lf, newZ: %lf\n",
+						box, molIndex, p, gpu_xCoords[atomIndex], gpu_yCoords[atomIndex], gpu_zCoords[atomIndex],
+						Array[p], Array[p + pLen], Array[p + 2*pLen]);
+			}
+#endif
 		}
 		double sumRold = gpu_imageReal[imageIndex];
 		double sumIold = gpu_imageImaginary[imageIndex];
 		double sumRnew = gpu_imageRealRef[imageIndex] = sumRold - sumRealOld + sumRealNew;
 		double sumInew = gpu_imageImaginaryRef[imageIndex] = sumIold - sumImaginaryOld + sumImaginaryNew;
 
-		imageSumNew[threadIdx.x] += (sumRnew * sumRnew + sumInew * sumInew) * gpu_prefact[imageIndex];
-//		if (threadId == 0)
-//			printf("box: %d, image: %d, sumRnew: %lf, sumInew: %lf, sumRold: %lf, sumIold: %lf, cacheRold: %lf, cacheIold: %lf, cacheRnew: %lf, cacheInew: %lf\n",
-//				box, threadId, sumRealNew, sumImaginaryNew, sumRealOld, sumImaginaryOld, sumRold, sumIold, sumRnew, sumInew);
+		imageSumNew[threadIdx.x] += (sumRnew * sumRnew + sumInew * sumInew) * prefact;
+#ifdef debug
+		if (threadId == 0)
+			printf("box: %d, image: %d, sumRnew: %lf, sumInew: %lf, sumRold: %lf, sumIold: %lf, cacheRold: %lf, cacheIold: %lf, cacheRnew: %lf, cacheInew: %lf\n",
+				box, threadId, sumRealNew, sumImaginaryNew, sumRealOld, sumImaginaryOld, sumRold, sumIold, sumRnew, sumInew);
+#endif
 	}
 
 	//after the calculation of each thread, implement reduction on gpu_imageReal
@@ -1571,7 +1654,7 @@ __global__ void MolReciprocalRotateGPU(
 	}
 
 	if (threadIdx.x == 0) {
-		gpu_blockRecipNew[blockIdx.x] = imageSumNew[0];
+		gpu_blockRecipNew[gridOffset + blockIdx.x] = imageSumNew[0];
 //		gpu_blockRecipOld[blockIdx.x] = imageSumOld[0];
 		__threadfence();
 		lastBlock = (atomicInc(&BlocksDone, gridDim.x) == gridDim.x - 1);
@@ -1582,13 +1665,13 @@ __global__ void MolReciprocalRotateGPU(
 	if (lastBlock) {
 		//If this thread corresponds to a valid block
 		if (threadIdx.x < gridDim.x) {
-			imageSumNew[threadIdx.x] = gpu_blockRecipNew[threadIdx.x];
+			imageSumNew[threadIdx.x] = gpu_blockRecipNew[gridOffset + threadIdx.x];
 //			imageSumOld[threadIdx.x] = gpu_blockRecipOld[threadIdx.x];
 		}
 
 		for (int i = blockDim.x; threadIdx.x + i < gridDim.x; i += blockDim.x) {
 			if (threadIdx.x + i < gridDim.x) {
-				imageSumNew[threadIdx.x] += gpu_blockRecipNew[threadIdx.x + i];
+				imageSumNew[threadIdx.x] += gpu_blockRecipNew[gridOffset + threadIdx.x + i];
 //				imageSumOld[threadIdx.x] += gpu_blockRecipOld[threadIdx.x + i];
 			}       //end if
 		}       //end for
@@ -1607,8 +1690,10 @@ __global__ void MolReciprocalRotateGPU(
 
 		if (threadIdx.x == 0) {
 			BlocksDone = 0;
-			gpu_blockRecipNew[0] = imageSumNew[0];
-//			printf("box: %d, RecipEnergyNew: %lf\n", box, gpu_blockRecipNew[0]);
+			gpu_blockRecipNew[gridOffset] = imageSumNew[0];
+#ifdef debug
+			printf("box: %d, RecipEnergyNew: %lf\n", box, gpu_blockRecipNew[gridOffset]);
+#endif
 		}
 	}
 }

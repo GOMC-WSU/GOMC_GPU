@@ -66,7 +66,8 @@ class CalculateEnergy
       SystemPotential SystemInter(SystemPotential potential,
                                   XYZArray const& coords, 
                                   XYZArray const& com,
-                                  BoxDimensions const& boxAxes) ;
+                                  BoxDimensions const& boxAxes,
+                                  bool volume = false) ;
 
       //! Calculates intermolecular energy (LJ and coulomb) of a molecule 
       //!                           were it at molCoords.

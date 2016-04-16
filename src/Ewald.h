@@ -59,7 +59,7 @@ class Ewald
    double BoxSelf(BoxDimensions const& boxAxes, uint box) const;
 
    //calculate reciprocate term for a box
-   double BoxReciprocal(int box, XYZArray const& molCoords);
+   double BoxReciprocal(int box, XYZArray const& molCoords, bool volume = false);
 
    //calculate correction term for a molecule
    double MolCorrection(uint molIndex, BoxDimensions const& boxAxes,
@@ -128,20 +128,26 @@ class Ewald
 
    void UpdateGPU(const uint pStart, const uint pLen, const uint molIndex, const uint box);
    void RestoreGPU(uint box);
+   void SetupGPUKernel();
+   void PrepareVolumeMove(XYZArray const &coords);
+   void AcceptVolumeMove();
+   void RejectVolumeMove();
 
    //GPU global arrays, variables, and streams
    uint molPerBox[BOX_TOTAL], atomPerBox[BOX_TOTAL];
-   double *gpu_xCoords, *gpu_yCoords, *gpu_zCoords,
+   double *gpu_xCoords, *gpu_yCoords, *gpu_zCoords, *gpu_xCoordsNew, *gpu_yCoordsNew, *gpu_zCoordsNew,
    	   *gpu_xTempCoords, *gpu_yTempCoords, *gpu_zTempCoords;
    uint *molStartAtom, *atomPerMol, *gpu_molStartAtom, *gpu_atomPerMol;
    double *gpu_atomCharge;
    double *gpu_recipEnergy;
    double *gpu_imageReal, *gpu_imageImaginary, *gpu_imageRealRef, *gpu_imageImaginaryRef;
    double *h_kx, *h_ky, *h_kz, *gpu_kx, *gpu_ky, *gpu_kz, *h_prefact, *gpu_prefact;
+   double *gpu_kxNew, *gpu_kyNew, *gpu_kzNew, *gpu_prefactNew;
    cudaStream_t streams[BOX_TOTAL];
    double blockRecipEnergy[2];
    double *gpu_newMolPos, *gpu_oldMolPos;
    double *gpu_blockRecipNew, *gpu_rotateMatrix;
+   int recipGridSize[2], recipBlockSize[2];
 
    private: 
    
@@ -182,8 +188,8 @@ __global__ void BoxReciprocalGPU(
 		double *gpu_xCoords, double *gpu_yCoords,
 		double *gpu_zCoords, double *gpu_atomCharge,
 		double *gpu_imageReal, double *gpu_imageImaginary,
-		double *gpu_kx, double *gpu_ky, double *gpu_kz,
-		double *gpu_prefact, const uint box, const uint imageOffset,
+		double *gpu_kx, double *gpu_ky, double *gpu_kz, double *gpu_prefact,
+		const uint box, const uint imageOffset, const uint recipOffset,
 		double *gpu_blockRecipEnergy, const uint imageSize);
 
 __global__ void MolReciprocalDisplaceGPU(

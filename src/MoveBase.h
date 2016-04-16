@@ -414,7 +414,7 @@ inline void VolumeTransfer::CalcEn()
    if (GEMC_KIND == mv::GEMC_NVT)
    {
       sysPotNew = calcEnRef.SystemInter(sysPotRef, newMolsPos,
-                                        newCOMs, newDim);
+                                        newCOMs, newDim, true);
    }
    else
    {
@@ -422,10 +422,10 @@ inline void VolumeTransfer::CalcEn()
                                      newCOMs, newDim, bPick);
       if (ewald)
       {
-	 calcEwald.RecipInit(bPick, newDim);
-	 sysPotNew.boxEnergy[bPick].recip =
-	   calcEwald.BoxReciprocal(bPick, newMolsPos); 
-	 sysPotNew.Total(); 
+    	  calcEwald.RecipInit(bPick, newDim);
+    	  calcEwald.PrepareVolumeMove(newMolsPos);
+    	  sysPotNew.boxEnergy[bPick].recip = calcEwald.BoxReciprocal(bPick, newMolsPos, true);
+    	  sysPotNew.Total();
       }
    }
 
@@ -477,10 +477,11 @@ inline void VolumeTransfer::Accept(const uint rejectState, const uint step)
 
       if (ewald)
       {
-	 for (uint b = 0; b < BOX_TOTAL; b++)
-	 {
-	    calcEwald.UpdateRecip(b); 
-	 }
+		 for (uint b = 0; b < BOX_TOTAL; b++)
+		 {
+			calcEwald.UpdateRecip(b);
+		 }
+		calcEwald.AcceptVolumeMove();
       }
      
    }
@@ -491,11 +492,12 @@ inline void VolumeTransfer::Accept(const uint rejectState, const uint step)
       regrewGrid = false;
       if (ewald)
       {
-	 for (uint b = 0; b < BOX_TOTAL; b++)
-	 {
-	    calcEwald.RecipInit(b, boxDimRef);
-	    calcEwald.BackUpRecip(b);
-	 }
+		 for (uint b = 0; b < BOX_TOTAL; b++)
+		 {
+			calcEwald.RecipInit(b, boxDimRef);
+			calcEwald.BackUpRecip(b);
+		 }
+		 calcEwald.RejectVolumeMove();
       }
    }
 #endif
