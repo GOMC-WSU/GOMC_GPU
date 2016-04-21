@@ -17,6 +17,8 @@
 #include "MolPick.h"
 #include "Forcefield.h"
 
+//#define debug
+
 class MoveBase
 {
  public:
@@ -149,12 +151,14 @@ inline void Translate::CalcEn()
    if (ewald)
    {
  //     recip.energy = calcEwald.MolReciprocal(newMolPos, m, b);
-//	   for (int i = pStart; i < pStart + pLen; i++)
-//	   {
-//		   std::cout << "CPU box: " << b << ", molIndex: " << m << ", atom: " << i-pStart<< ", x: " << coordCurrRef.x[i] << ", y: " << coordCurrRef.y[i]
-//		             << ", z: " << coordCurrRef.z[i]
-//		             << ", newX: " << newMolPos.x[i-pStart] << ", newY: " << newMolPos.y[i-pStart] << ", newZ: " << newMolPos.z[i-pStart] << std::endl;
-//	   }
+#ifdef debug
+	   for (int i = pStart; i < pStart + pLen; i++)
+	   {
+		   std::cout << "CPU box: " << b << ", molIndex: " << m << ", atom: " << i-pStart<< ", x: " << coordCurrRef.x[i] << ", y: " << coordCurrRef.y[i]
+		             << ", z: " << coordCurrRef.z[i]
+		             << ", newX: " << newMolPos.x[i-pStart] << ", newY: " << newMolPos.y[i-pStart] << ", newZ: " << newMolPos.z[i-pStart] << std::endl;
+	   }
+#endif
 	   recip.energy = calcEwald.MolReciprocal(pStart, pLen, m, b, coordCurrRef.GetShift(), 0, coordCurrRef.GetMatrix()) - sysPotRef.boxEnergy[b].recip;
    }
    calcEnRef.MoleculeInter(inter_LJ, inter_Real, newMolPos, m, b, &newCOM);
@@ -168,9 +172,10 @@ inline void Translate::Accept(const uint rejectState, const uint step)
       double pr = prng();
       res = pr < exp(-BETA * (inter_LJ.energy + inter_Real.energy +
 			      recip.energy));
-
-//	   std::cout << "step: " << step << ", accept: " << res << ", pr: " << pr << ", interLJ: " << inter_LJ.energy << ", interReal: "
-//			   << inter_Real.energy << ", recip difference: " << recip.energy << ", recip old: " << sysPotRef.boxEnergy[b].recip << std::endl;
+#ifdef debug
+	   std::cout << "step: " << step << ", accept: " << res << ", pr: " << pr << ", interLJ: " << inter_LJ.energy << ", interReal: "
+			   << inter_Real.energy << ", recip difference: " << recip.energy << ", recip old: " << sysPotRef.boxEnergy[b].recip << std::endl;
+#endif
    }
    bool result = (rejectState == mv::fail_state::NO_FAIL) && res;
 
@@ -256,12 +261,14 @@ inline void Rotate::CalcEn()
    if (ewald)
    {
       //recip.energy = calcEwald.MolReciprocal(newMolPos, m, b);
-//      for (int i = pStart; i < pStart + pLen; i++)
-//		{
-//		   std::cout << "CPU box: " << b << ", molIndex: " << m << ", atom: " << i-pStart<< ", x: " << coordCurrRef.x[i] << ", y: " << coordCurrRef.y[i]
-//					 << ", z: " << coordCurrRef.z[i]
-//					 << ", newX: " << newMolPos.x[i-pStart] << ", newY: " << newMolPos.y[i-pStart] << ", newZ: " << newMolPos.z[i-pStart] << std::endl;
-//		}
+#ifdef debug
+      for (int i = pStart; i < pStart + pLen; i++)
+		{
+		   std::cout << "CPU box: " << b << ", molIndex: " << m << ", atom: " << i-pStart<< ", x: " << coordCurrRef.x[i] << ", y: " << coordCurrRef.y[i]
+					 << ", z: " << coordCurrRef.z[i]
+					 << ", newX: " << newMolPos.x[i-pStart] << ", newY: " << newMolPos.y[i-pStart] << ", newZ: " << newMolPos.z[i-pStart] << std::endl;
+		}
+#endif
 		recip.energy = calcEwald.MolReciprocal(pStart, pLen, m, b, coordCurrRef.GetCenter(), 1, coordCurrRef.GetMatrix()) - sysPotRef.boxEnergy[b].recip;
    }
    calcEnRef.MoleculeInter(inter_LJ, inter_Real, newMolPos, m, b);
@@ -277,10 +284,10 @@ inline void Rotate::Accept(const uint rejectState, const uint step)
 			      recip.energy));
    }
    bool result = (rejectState == mv::fail_state::NO_FAIL) && res;
-
-//   std::cout << "step: " << step << ", accept: " << result << ", interLJ: " << inter_LJ.energy << ", interReal: "
-//		   << inter_Real.energy << ", recip difference: " << recip.energy << ", recip old: " << sysPotRef.boxEnergy[b].recip << std::endl;
-
+#ifdef debug
+   std::cout << "step: " << step << ", accept: " << result << ", interLJ: " << inter_LJ.energy << ", interReal: "
+		   << inter_Real.energy << ", recip difference: " << recip.energy << ", recip old: " << sysPotRef.boxEnergy[b].recip << std::endl;
+#endif
    if (result)
    {
       //Set new energy.

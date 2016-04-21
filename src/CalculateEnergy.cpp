@@ -108,7 +108,7 @@ SystemPotential CalculateEnergy::SystemInter
 {
    for (uint b = 0; b < BOXES_WITH_U_NB; ++b)
    {
-//      potential = BoxInter(potential, coords, com, boxAxes, b);
+      potential = BoxInter(potential, coords, com, boxAxes, b);
       if (ewald)
       {
     	  calcEwald->RecipInit(b, boxAxes);

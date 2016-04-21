@@ -450,8 +450,8 @@ void Ewald::RecipInit(uint box, BoxDimensions const& boxAxes)
    double alpsqr4 = 1.0 / (4.0 * alpha * alpha);
    double constValue = 2 * M_PI / boxAxes.axis.BoxSize(box);
    double vol = boxAxes.volume[box] / (4 * M_PI);
-   int kmax = int(recip_rcut * boxAxes.axis.BoxSize(box) / (2 * M_PI)) + 1;
-//   int kmax = 5;
+//   int kmax = int(recip_rcut * boxAxes.axis.BoxSize(box) / (2 * M_PI)) + 1;
+   int kmax = 5;
    for (int x = 0; x <= kmax; x++)
    {
       int nky_max = sqrt(pow(kmax, 2) - pow(x, 2));

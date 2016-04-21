@@ -8,7 +8,7 @@
 
 #ifndef ENSEMBLE
 //The choice of ensemble.
-#define ENSEMBLE GEMC
+#define ENSEMBLE NVT
 #endif
 
 //Ensemble specific defines, such as what data members are variable
