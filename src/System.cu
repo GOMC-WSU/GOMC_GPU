@@ -464,6 +464,8 @@ inline int System::_ConvertSMVer2Cores(int major, int minor)
 		{ 0x30, 192}, // Kepler Generation (SM 3.0) GK10x class
 		{ 0x35, 192}, // Kepler Generation (SM 3.5) GK11x class
 		{ 0x50, 128}, // Maxwell Generation (SM 5.0) GM10x class
+		{ 0x52, 128}, // Maxwell Genetation (SM 5.2) GM20x class
+		{ 0x60, 64 }, // Pascal Generation (SM 6.0) GP10x class
 		{   -1, -1 }
 	};
 
