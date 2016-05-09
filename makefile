@@ -72,9 +72,11 @@ EXTRA_LDFLAGS   ?=
 # CUDA code generation flags
 GENCODE_SM10    := -gencode arch=compute_10,code=sm_10
 GENCODE_SM20    := -gencode arch=compute_20,code=sm_21
-GENCODE_SM30    := -gencode arch=compute_30,code=sm_30 
+GENCODE_SM30    := -gencode arch=compute_30,code=sm_30
 GENCODE_SM35    := -gencode arch=compute_35,code=sm_35
-GENCODE_FLAGS   :=  $(GENCODE_SM30) 
+GENCODE_SM52    := -gencode arch=compute_50,code=sm_50
+GENCODE_SM52    := -gencode arch=compute_52,code=sm_52
+GENCODE_FLAGS   :=  $(GENCODE_SM30)
 
 # OS-specific build flags
 ifneq ($(DARWIN),) 
@@ -116,7 +118,7 @@ build: GOMC.out
 
 GOMC.out: 
 	$(NVCC) ./src/*.cpp ./src/*.cu ./src/*.cc ./src/cbmc/*.cpp $(NVCCFLAGS)  $(GENCODE_FLAGS) $(INCLUDES) -lm -o GOMC.out
-	
+
 
 
 run: build
