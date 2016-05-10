@@ -1,3 +1,14 @@
+The GPU support is being migrated to the CPU code to simplify the develop into a single code base. 
+This will improve the maintainability for future releases. The current GPU branch can still be used, 
+but the CPU branch has additional functionality, such as support for Ewald Sum. Future updates will be 
+made only to the CPU branch, which will also include GPU support
+
+
+
+
+
+
+
 *******************
 *****GOMC 1.0*****
 *******************
